@@ -1,0 +1,90 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+
+// Pages
+import LandingPage from './pages/LandingPage'
+import UsernameEntryPage from './pages/UsernameEntryPage'
+import GameLobby from './pages/GameLobby'
+import GamePageWrapper from './pages/GamePageWrapper'
+import RoomPage from './pages/RoomPage'
+import LeaderboardPage from './pages/LeaderboardPage'
+import AdminDashboard from './pages/AdminDashboard'
+
+/**
+ * Main App Component
+ * Handles routing and user session management
+ */
+function App() {
+  const [username, setUsername] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // Check if user has a saved username on mount
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('bopc_username')
+    if (savedUsername) {
+      setUsername(savedUsername)
+    }
+    setLoading(false)
+  }, [])
+
+  const handleUsernameSet = (name) => {
+    setUsername(name)
+    localStorage.setItem('bopc_username', name)
+  }
+
+  const handleLogout = () => {
+    setUsername(null)
+    localStorage.removeItem('bopc_username')
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-xl font-semibold text-gray-700">Loading...</div>
+      </div>
+    )
+  }
+
+  return (
+    <Router>
+      <Routes>
+        {/* Landing and entry pages */}
+        <Route 
+          path="/" 
+          element={!username ? <LandingPage /> : <Navigate to="/lobby" />} 
+        />
+        <Route 
+          path="/enter-username" 
+          element={!username ? <UsernameEntryPage onUsernameSet={handleUsernameSet} /> : <Navigate to="/lobby" />} 
+        />
+
+        {/* Protected routes - require username */}
+        <Route 
+          path="/lobby" 
+          element={username ? <GameLobby username={username} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/room/:roomCode" 
+          element={username ? <RoomPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/game/:roomCode" 
+          element={username ? <GamePageWrapper username={username} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/leaderboard" 
+          element={username ? <LeaderboardPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/admin" 
+          element={username ? <AdminDashboard username={username} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Router>
+  )
+}
+
+export default App
