@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import TargetArenaBoard from '../components/TargetArenaBoard'
+import GameOverlay from '../components/GameOverlay'
 import { useSocket } from '../hooks/useSocket'
 
 const TARGET_TYPES = ['normal', 'fast', 'golden', 'wrong']
@@ -39,6 +40,9 @@ export default function TargetArenaPage({ username, onLogout }) {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [messages, setMessages] = useState([])
+  const [countdown, setCountdown] = useState(null)
+  const [countdownOver, setCountdownOver] = useState(false)
+  const [overlay, setOverlay] = useState(null)
 
   const playerScore = scores[username] ?? 0
   const opponentScore = opponent ? scores[opponent] ?? 0 : 0
@@ -81,11 +85,44 @@ export default function TargetArenaPage({ username, onLogout }) {
       }
     })
 
+    socket.on('game-started', data => {
+      console.log('🎮 Target Arena game started')
+      setOverlay('GET READY')
+      setTimeout(() => {
+        setCountdown(3)
+        setOverlay(null)
+      }, 1200)
+    })
+
     socket.on('game-ended', data => {
       if (!data) return
       setGameStatus('ended')
       setTimer(0)
-      addMessage(data.message || 'Round ended', 'system')
+      setOverlay('TIME UP')
+      
+      setTimeout(() => {
+        if (scores[username] > opponentScore) {
+          setOverlay('YOU WIN')
+        } else if (scores[username] < opponentScore) {
+          setOverlay('YOU LOSE')
+        } else {
+          setOverlay('DRAW')
+        }
+        addMessage(data.message || 'Round ended', 'system')
+        setTimeout(() => {
+          setOverlay(null)
+        }, 1500)
+      }, 1200)
+    })
+
+    socket.on('countdown-complete', data => {
+      console.log('✓ Countdown complete')
+      setOverlay('START')
+      setOverlay('HIT THE TARGETS')
+      setTimeout(() => {
+        setOverlay(null)
+        setCountdownOver(true)
+      }, 1200)
     })
 
     socket.on('game-reset', data => {

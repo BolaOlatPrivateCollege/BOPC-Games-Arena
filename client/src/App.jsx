@@ -7,6 +7,8 @@ import UsernameEntryPage from './pages/UsernameEntryPage'
 import GameLobby from './pages/GameLobby'
 import GamePageWrapper from './pages/GamePageWrapper'
 import RoomPage from './pages/RoomPage'
+import TicTacToeBotPage from './pages/TicTacToeBotPage'
+import TargetArenaBotPage from './pages/TargetArenaBotPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import WeeklyContest from './pages/WeeklyContest'
 import AdminDashboard from './pages/AdminDashboard'
@@ -80,6 +82,14 @@ function App() {
         <Route
           path="/contest"
           element={username ? <WeeklyContest username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/games/tic-tac-toe/bot"
+          element={username ? <TicTacToeBotPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/games/target-arena/bot"
+          element={username ? <TargetArenaBotPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
         />
         <Route
           path="/profile"

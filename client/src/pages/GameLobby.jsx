@@ -11,6 +11,7 @@ import JoinRoomModal from '../components/JoinRoomModal'
 export default function GameLobby({ username, onLogout }) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
+  const [createGameType, setCreateGameType] = useState('tic-tac-toe')
   const navigate = useNavigate()
 
   return (
@@ -78,6 +79,29 @@ export default function GameLobby({ username, onLogout }) {
                   <h3 className="mt-4 text-xl font-semibold text-slate-900">Tic Tac Toe</h3>
                   <p className="mt-2 text-sm text-slate-600">Live 2-player matches with rematch support and clear turn tracking.</p>
                   <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-3 py-1 text-sm text-indigo-700">Available</div>
+                  <div className="mt-6 grid gap-3">
+                    <button
+                      onClick={() => {
+                        setCreateGameType('tic-tac-toe')
+                        setShowCreateModal(true)
+                      }}
+                      className="btn btn-primary w-full py-3"
+                    >
+                      Create Room / Play Online
+                    </button>
+                    <button
+                      onClick={() => setShowJoinModal(true)}
+                      className="btn btn-secondary w-full py-3"
+                    >
+                      Join Room
+                    </button>
+                    <button
+                      onClick={() => navigate('/games/tic-tac-toe/bot')}
+                      className="btn btn-outline w-full py-3"
+                    >
+                      Play with Bot
+                    </button>
+                  </div>
                 </div>
 
                 <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
@@ -85,6 +109,29 @@ export default function GameLobby({ username, onLogout }) {
                   <h3 className="mt-4 text-xl font-semibold text-slate-900">Target Arena</h3>
                   <p className="mt-2 text-sm text-slate-600">A fun 60-second target challenge with balloons, stars, and fast scoring.</p>
                   <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700">Available</div>
+                  <div className="mt-6 grid gap-3">
+                    <button
+                      onClick={() => {
+                        setCreateGameType('target-arena')
+                        setShowCreateModal(true)
+                      }}
+                      className="btn btn-primary w-full py-3"
+                    >
+                      Create Room / Play Online
+                    </button>
+                    <button
+                      onClick={() => setShowJoinModal(true)}
+                      className="btn btn-secondary w-full py-3"
+                    >
+                      Join Room
+                    </button>
+                    <button
+                      onClick={() => navigate('/games/target-arena/bot')}
+                      className="btn btn-outline w-full py-3"
+                    >
+                      Play with Bot
+                    </button>
+                  </div>
                 </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm opacity-90">
@@ -134,6 +181,7 @@ export default function GameLobby({ username, onLogout }) {
       {showCreateModal && (
         <CreateRoomModal 
           username={username}
+          defaultGame={createGameType}
           onClose={() => setShowCreateModal(false)}
           onRoomCreated={(roomCode) => {
             setShowCreateModal(false)

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import GameBoardTicTacToe from '../components/GameBoardTicTacToe'
+import GameOverlay from '../components/GameOverlay'
 import { useSocket } from '../hooks/useSocket'
 
 /**
@@ -23,6 +24,11 @@ export default function TicTacToePage({ username, onLogout }) {
   const [messages, setMessages] = useState([])
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
+  const [countdown, setCountdown] = useState(null)
+  const [countdownOver, setCountdownOver] = useState(false)
+  const [overlay, setOverlay] = useState(null)
+  const [turnTimer, setTurnTimer] = useState(30)
+  const [timedOut, setTimedOut] = useState(false)
 
   const addMessage = (text, type = 'system') => {
     setMessages(prev => [
@@ -126,16 +132,54 @@ export default function TicTacToePage({ username, onLogout }) {
       }
     })
 
-    socket.on('opponent-joined', data => {
-      console.log('👥 Opponent joined:', data)
+    socket.on('game-started', data => {
+      console.log('🎮 Game started:', data)
+      setOverlay('GET READY')
+      setTimeout(() => {
+        setCountdown(3)
+        setOverlay(null)
+      }, 1200)
+    })
 
-      setOpponent(data.opponentUsername)
-
-      if (data.playerSymbol) {
-        setPlayerSymbol(data.playerSymbol)
+    socket.on('countdown-tick', data => {
+      if (data.countdown > 0) {
+        setOverlay(data.countdown.toString())
       }
+    })
 
-      addMessage(`${data.opponentUsername} joined the game!`, 'system')
+    socket.on('countdown-complete', data => {
+      setOverlay('START')
+      setTimeout(() => {
+        setOverlay(null)
+        setCountdownOver(true)
+      }, 800)
+    })
+
+    socket.on('turn-timer-update', data => {
+      console.log('⏱️ Timer update:', data)
+      setTurnTimer(data.remainingSeconds || 30)
+      if (data.remainingSeconds <= 0 && !timedOut) {
+        setTimedOut(true)
+        setOverlay('TIME OUT')
+      }
+    })
+
+    socket.on('player-timeout', data => {
+      console.log('⏱️ Player timed out:', data)
+      setTimedOut(true)
+      setOverlay('TIME OUT')
+      setTimeout(() => {
+        setOverlay(null)
+        if (data.winner) {
+          if (data.winner === username) {
+            setOverlay('YOU WIN')
+          } else {
+            setOverlay('YOU LOSE')
+          }
+          setGameStatus('won')
+          addMessage(`${data.timedOutPlayer} timed out! ${data.winner} wins.`, 'system')
+        }
+      }, 1200)
     })
 
     socket.on('move-made', data => {
@@ -193,6 +237,11 @@ export default function TicTacToePage({ username, onLogout }) {
       socket.off('roomUpdated')
       socket.off('game-state-update')
       socket.off('opponent-joined')
+      socket.off('game-started')
+      socket.off('countdown-tick')
+      socket.off('countdown-complete')
+      socket.off('turn-timer-update')
+      socket.off('player-timeout')
       socket.off('move-made')
       socket.off('game-ended')
       socket.off('game-reset')
@@ -201,12 +250,47 @@ export default function TicTacToePage({ username, onLogout }) {
     }
   }, [socket, username, roomCode])
 
+  // Countdown effect
+  useEffect(() => {
+    if (countdown === null || countdownOver) return
+
+    if (countdown === 0) {
+      socket?.emit('countdown-complete', { roomCode })
+      return
+    }
+
+    const timer = setTimeout(() => {
+      socket?.emit('countdown-tick', { roomCode, countdown })
+      setCountdown(countdown - 1)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [countdown, countdownOver, socket, roomCode])
+
+  // Turn timer effect
+  useEffect(() => {
+    if (gameStatus !== 'playing' || !countdownOver || timedOut) return
+    if (turnTimer <= 0) {
+      setTimedOut(true)
+      socket?.emit('turn-timeout', { roomCode, timedOutPlayer: username })
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setTurnTimer(turnTimer - 1)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [gameStatus, turnTimer, countdownOver, timedOut, socket, roomCode, username])
+
   const handleCellClick = index => {
     if (!socket) return
     if (board[index] !== null) return
     if (gameOver) return
     if (gameStatus !== 'playing') return
     if (!playerSymbol) return
+    if (timedOut) return
+    if (!countdownOver) return
 
     const currentTurn = isXNext ? 'X' : 'O'
     const isPlayerTurn = playerSymbol === currentTurn
@@ -225,6 +309,7 @@ export default function TicTacToePage({ username, onLogout }) {
       return
     }
 
+    setTurnTimer(30)
     socket.emit('make-move', {
       roomCode,
       index,
@@ -294,7 +379,9 @@ export default function TicTacToePage({ username, onLogout }) {
     gameStatus !== 'playing' ||
     gameOver ||
     !playerSymbol ||
-    !isMyTurn
+    !isMyTurn ||
+    !countdownOver ||
+    timedOut
 
   if (!isConnected) {
     return (
@@ -312,6 +399,7 @@ export default function TicTacToePage({ username, onLogout }) {
   return (
     <div className="min-h-screen bg-slate-100">
       <Header username={username} onLogout={onLogout} />
+      <GameOverlay message={overlay} show={overlay !== null} duration={800} />
 
       <div className="container-custom mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
@@ -417,10 +505,11 @@ export default function TicTacToePage({ username, onLogout }) {
                 disabled={boardDisabled}
                 gameOver={gameOver}
                 statusMessage={
+                  !countdownOver ? 'Get ready...' :
                   gameStatus === 'playing'
                     ? isMyTurn
-                      ? 'Your turn'
-                      : "Opponent's turn"
+                      ? `Your turn — ${turnTimer}s`
+                      : `Opponent's turn — ${turnTimer}s`
                     : ''
                 }
               />

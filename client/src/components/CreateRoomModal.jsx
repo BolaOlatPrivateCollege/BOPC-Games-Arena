@@ -5,8 +5,8 @@ import axios from 'axios'
  * Create Room Modal Component
  * Allows user to create a new game room
  */
-export default function CreateRoomModal({ username, onClose, onRoomCreated }) {
-  const [gameName, setGameName] = useState('tic-tac-toe')
+export default function CreateRoomModal({ username, defaultGame = 'tic-tac-toe', onClose, onRoomCreated }) {
+  const [gameName, setGameName] = useState(defaultGame)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
