@@ -7,6 +7,9 @@ import { connectDatabase } from './config/database.js'
 import { setupSocketHandlers } from './sockets/handlers.js'
 import roomRoutes from './routes/rooms.js'
 import leaderboardRoutes from './routes/leaderboard.js'
+import contestRoutes from './routes/contests.js'
+import usersRoutes from './routes/users.js'
+import adminRoutes from './routes/admin.js'
 
 // Load environment variables
 dotenv.config()
@@ -44,6 +47,9 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/rooms', roomRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
+app.use('/api/contests', contestRoutes)
+app.use('/api/users', usersRoutes)
+app.use('/api/admin', adminRoutes)
 
 // Socket.io event handlers
 setupSocketHandlers(io)

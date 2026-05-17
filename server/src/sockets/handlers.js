@@ -1,6 +1,9 @@
 import { getRoom, setRoomWinner, removePlayerFromRoom } from '../models/Room.js'
 import Leaderboard from '../models/Leaderboard.js'
 import TargetArenaGame from '../models/TargetArenaGame.js'
+import Contest from '../models/Contest.js'
+import ContestScore from '../models/ContestScore.js'
+import User from '../models/User.js'
 
 /**
  * Tic Tac Toe Game Logic
@@ -149,6 +152,15 @@ export function setupSocketHandlers(io) {
       }
 
       socket.join(roomCode)
+
+      // Ensure student profile exists for this username
+      if (username) {
+        try {
+          User.getOrCreate(username).catch(err => console.warn('Failed to ensure user profile:', err))
+        } catch (err) {
+          console.warn('Failed to ensure user profile:', err)
+        }
+      }
 
       let playerInRoom = null
 
@@ -784,6 +796,20 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
         console.log(
           `📊 Tic Tac Toe result recorded: ${player1Username} won vs ${player2Username}`
         )
+        // Update active weekly contest scores (if any)
+        try {
+          const activeContest = await Contest.getActiveContest()
+          if (activeContest) {
+            console.log('Active contest found:', activeContest.title)
+            await ContestScore.updateForResult(activeContest, player1Username, 'ticTacToe', 'win')
+            await ContestScore.updateForResult(activeContest, player2Username, 'ticTacToe', 'loss')
+            console.log('Weekly contest score updated for ticTacToe result')
+          } else {
+            console.log('No active contest found')
+          }
+        } catch (err) {
+          console.error('❌ Error updating contest scores for ticTacToe win:', err)
+        }
       } else if (resultType === 'draw') {
         await Leaderboard.updateUserStats(player1Username, 'draw', 'ticTacToe')
         await Leaderboard.updateUserStats(player2Username, 'draw', 'ticTacToe')
@@ -791,6 +817,20 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
         console.log(
           `📊 Tic Tac Toe draw recorded: ${player1Username} and ${player2Username}`
         )
+        // Update active weekly contest scores (if any)
+        try {
+          const activeContest = await Contest.getActiveContest()
+          if (activeContest) {
+            console.log('Active contest found:', activeContest.title)
+            await ContestScore.updateForResult(activeContest, player1Username, 'ticTacToe', 'draw')
+            await ContestScore.updateForResult(activeContest, player2Username, 'ticTacToe', 'draw')
+            console.log('Weekly contest score updated for ticTacToe draw')
+          } else {
+            console.log('No active contest found')
+          }
+        } catch (err) {
+          console.error('❌ Error updating contest scores for ticTacToe draw:', err)
+        }
       }
 
       return
@@ -820,6 +860,20 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
         console.log(
           `📊 Target Arena result recorded: ${player1Username} won with ${player1Score} vs ${player2Username} with ${player2Score}`
         )
+        // Update active weekly contest scores (if any)
+        try {
+          const activeContest = await Contest.getActiveContest()
+          if (activeContest) {
+            console.log('Active contest found:', activeContest.title)
+            await ContestScore.updateForResult(activeContest, player1Username, 'targetArena', 'win', { score: player1Score })
+            await ContestScore.updateForResult(activeContest, player2Username, 'targetArena', 'loss', { score: player2Score })
+            console.log('Weekly contest score updated for targetArena win')
+          } else {
+            console.log('No active contest found')
+          }
+        } catch (err) {
+          console.error('❌ Error updating contest scores for targetArena win:', err)
+        }
       } else if (resultType === 'draw') {
         await Leaderboard.updateUserStats(
           player1Username,
@@ -838,6 +892,20 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
         console.log(
           `📊 Target Arena draw recorded: ${player1Username} (${player1Score}) and ${player2Username} (${player2Score})`
         )
+        // Update active weekly contest scores (if any)
+        try {
+          const activeContest = await Contest.getActiveContest()
+          if (activeContest) {
+            console.log('Active contest found:', activeContest.title)
+            await ContestScore.updateForResult(activeContest, player1Username, 'targetArena', 'draw', { score: player1Score })
+            await ContestScore.updateForResult(activeContest, player2Username, 'targetArena', 'draw', { score: player2Score })
+            console.log('Weekly contest score updated for targetArena draw')
+          } else {
+            console.log('No active contest found')
+          }
+        } catch (err) {
+          console.error('❌ Error updating contest scores for targetArena draw:', err)
+        }
       }
 
       return

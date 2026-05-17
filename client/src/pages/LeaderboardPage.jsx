@@ -115,7 +115,7 @@ export default function LeaderboardPage({ username, onLogout }) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[860px]">
                 <thead className="bg-gray-100 border-b-2 border-gray-300">
                   <tr>
                     <th className="px-6 py-4 text-left font-bold text-gray-800">Rank</th>
@@ -123,6 +123,12 @@ export default function LeaderboardPage({ username, onLogout }) {
                     <th className="px-6 py-4 text-center font-bold text-gray-800">Wins</th>
                     <th className="px-6 py-4 text-center font-bold text-gray-800">Losses</th>
                     <th className="px-6 py-4 text-center font-bold text-gray-800">Draws</th>
+                    {selectedGame === 'ticTacToe' && (
+                      <>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">Total Games</th>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">Points</th>
+                      </>
+                    )}
                     <th className="px-6 py-4 text-center font-bold text-gray-800">Win Rate</th>
                     {selectedGame === 'global' && (
                       <th className="px-6 py-4 text-center font-bold text-gray-800">Rating</th>
@@ -143,6 +149,22 @@ export default function LeaderboardPage({ username, onLogout }) {
                       : selectedGame === 'targetArena'
                       ? gameStats.targetArena || {}
                       : {}
+
+                    const wins = selectedGame === 'global'
+                      ? player.wins || 0
+                      : playerGameStats.wins || 0
+                    const losses = selectedGame === 'global'
+                      ? player.losses || 0
+                      : playerGameStats.losses || 0
+                    const draws = selectedGame === 'global'
+                      ? player.draws || 0
+                      : playerGameStats.draws || 0
+                    const totalGames = selectedGame === 'ticTacToe'
+                      ? playerGameStats.totalGamesPlayed ?? (wins + losses + draws)
+                      : null
+                    const points = selectedGame === 'ticTacToe'
+                      ? wins * 3 + draws
+                      : null
 
                     return (
                       <tr 
@@ -168,10 +190,10 @@ export default function LeaderboardPage({ username, onLogout }) {
                             <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                               {player.username.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-semibold text-gray-800">
-                              {player.username}
-                              {player.username === username && ' (You)'}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-gray-800">{player.username}{player.username === username && ' (You)'}</span>
+                              {player.schoolName && <span className="text-xs text-gray-500">{player.schoolName}</span>}
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center font-semibold text-green-600">
@@ -183,6 +205,16 @@ export default function LeaderboardPage({ username, onLogout }) {
                         <td className="px-6 py-4 text-center font-semibold text-orange-600">
                           {selectedGame === 'global' ? player.draws || 0 : playerGameStats.draws || 0}
                         </td>
+                        {selectedGame === 'ticTacToe' && (
+                          <>
+                            <td className="px-6 py-4 text-center font-semibold text-gray-800">
+                              {totalGames}
+                            </td>
+                            <td className="px-6 py-4 text-center font-semibold text-cyan-600">
+                              {points}
+                            </td>
+                          </>
+                        )}
                         <td className="px-6 py-4 text-center font-semibold text-blue-600">
                           {selectedGame === 'global' ? player.winRate || 0 : playerGameStats.winRate || 0}%
                         </td>

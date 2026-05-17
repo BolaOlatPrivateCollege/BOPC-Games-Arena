@@ -9,6 +9,9 @@ import axios from 'axios'
 export default function UsernameEntryPage({ onUsernameSet }) {
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
+  const [schoolName, setSchoolName] = useState('')
+  const [classLevel, setClassLevel] = useState('')
+  const [category, setCategory] = useState('')
   const navigate = useNavigate()
 
   // Handle username submission
@@ -41,16 +44,34 @@ export default function UsernameEntryPage({ onUsernameSet }) {
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-      await axios.post(`${apiUrl}/api/leaderboard/register`, {
-        username: trimmedUsername
+      // Infer category if not explicitly set
+      let resolvedCategory = category
+      if (!resolvedCategory && classLevel) {
+        const cl = String(classLevel).toUpperCase()
+        if (cl.startsWith('JSS')) resolvedCategory = 'junior'
+        else if (cl.startsWith('SS')) resolvedCategory = 'senior'
+        else resolvedCategory = 'open'
+      }
+
+      const res = await axios.post(`${apiUrl}/api/users`, {
+        username: trimmedUsername,
+        schoolName: schoolName || undefined,
+        classLevel: classLevel || undefined,
+        category: resolvedCategory || undefined
       })
+
+      if (res?.data?.user?.username) {
+        onUsernameSet(res.data.user.username)
+        navigate('/lobby')
+        return
+      }
+
+      setError('Failed to create or find user')
+      return
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to register username')
       return
     }
-
-    onUsernameSet(trimmedUsername)
-    navigate('/lobby')
   }
 
   return (
@@ -80,6 +101,35 @@ export default function UsernameEntryPage({ onUsernameSet }) {
             <p className="text-xs text-gray-500 mt-1">
               3-20 characters, letters, numbers, underscore, hyphen
             </p>
+          </div>
+
+          <div>
+            <label htmlFor="schoolName" className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
+            <input id="schoolName" type="text" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} placeholder="Your school (optional)" className="input" />
+          </div>
+
+          <div>
+            <label htmlFor="classLevel" className="block text-sm font-medium text-gray-700 mb-2">Class Level</label>
+            <select id="classLevel" value={classLevel} onChange={(e) => setClassLevel(e.target.value)} className="input">
+              <option value="">Select class level (optional)</option>
+              <option value="JSS1">JSS1</option>
+              <option value="JSS2">JSS2</option>
+              <option value="JSS3">JSS3</option>
+              <option value="SS1">SS1</option>
+              <option value="SS2">SS2</option>
+              <option value="SS3">SS3</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select id="category" value={category} onChange={(e) => setCategory(e.target.value)} className="input">
+              <option value="">Auto-detect from class level or choose</option>
+              <option value="junior">Junior</option>
+              <option value="senior">Senior</option>
+              <option value="open">Open</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">If left blank, category will be inferred from class level.</p>
           </div>
 
           {error && (

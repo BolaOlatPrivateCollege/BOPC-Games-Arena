@@ -1,5 +1,6 @@
 import express from 'express'
 import Leaderboard from '../models/Leaderboard.js'
+import User from '../models/User.js'
 
 const router = express.Router()
 
@@ -14,10 +15,18 @@ router.get('/', async (req, res) => {
 
     const leaderboard = await Leaderboard.getLeaderboard(game, limit)
 
-    const rankedLeaderboard = leaderboard.map((player, idx) => ({
-      ...player.toObject(),
-      rank: idx + 1
-    }))
+    const rankedLeaderboard = await Promise.all(
+      leaderboard.map(async (player, idx) => {
+        const base = { ...player.toObject(), rank: idx + 1 }
+        try {
+          const profile = await User.findOne({ username: base.username }).lean().exec()
+          if (profile && profile.schoolName) base.schoolName = profile.schoolName
+        } catch (e) {
+          // ignore profile lookup errors
+        }
+        return base
+      })
+    )
 
     if (game === 'global') {
       console.log('Global leaderboard fetched')

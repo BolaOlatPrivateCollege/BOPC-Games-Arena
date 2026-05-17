@@ -8,7 +8,9 @@ import GameLobby from './pages/GameLobby'
 import GamePageWrapper from './pages/GamePageWrapper'
 import RoomPage from './pages/RoomPage'
 import LeaderboardPage from './pages/LeaderboardPage'
+import WeeklyContest from './pages/WeeklyContest'
 import AdminDashboard from './pages/AdminDashboard'
+import ProfilePage from './pages/ProfilePage'
 
 /**
  * Main App Component
@@ -75,9 +77,17 @@ function App() {
           path="/leaderboard" 
           element={username ? <LeaderboardPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
+        <Route
+          path="/contest"
+          element={username ? <WeeklyContest username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/profile"
+          element={username ? <ProfilePage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
         <Route 
           path="/admin" 
-          element={username ? <AdminDashboard username={username} onLogout={handleLogout} /> : <Navigate to="/" />} 
+          element={<AdminDashboard username={username} onLogout={handleLogout} />} 
         />
 
         {/* Catch all */}

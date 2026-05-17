@@ -125,13 +125,7 @@ export default function GameLobby({ username, onLogout }) {
 
             <div className="rounded-[2rem] bg-white p-6 shadow-xl shadow-slate-200/80">
               <h3 className="text-xl font-semibold text-slate-900">Admin Dashboard</h3>
-              <p className="mt-3 text-sm text-slate-600">Quick access to admin controls, moderation tools, and system settings.</p>
-              <button
-                onClick={() => navigate('/admin')}
-                className="btn btn-secondary w-full mt-6"
-              >
-                Go to Admin
-              </button>
+              <p className="mt-3 text-sm text-slate-600">Admin access is available by entering the /admin path directly.</p>
             </div>
           </div>
         </div>
