@@ -2,6 +2,7 @@ import { getRoom, setRoomWinner, removePlayerFromRoom } from '../models/Room.js'
 import Leaderboard from '../models/Leaderboard.js'
 import TargetArenaGame from '../models/TargetArenaGame.js'
 import MathRushGame from '../models/MathRushGame.js'
+import WordBattleGame from '../models/WordBattleGame.js'
 import Contest from '../models/Contest.js'
 import ContestScore from '../models/ContestScore.js'
 import User from '../models/User.js'
@@ -214,6 +215,15 @@ export function setupSocketHandlers(io) {
           console.log(`🎮 Math Rush auto-started in room: ${roomCode}`)
           console.log(`👤 Player 1: ${player1.username} (${player1.socketId})`)
           console.log(`👤 Player 2: ${player2.username} (${player2.socketId})`)
+        } else if (room.game === 'word-battle') {
+          const game = new WordBattleGame(room, io, recordGameResult, room.gameState)
+          games.set(roomCode, game)
+          room.status = 'playing'
+          room.gameState = game.getState()
+
+          console.log(`🎮 Word Battle auto-started in room: ${roomCode}`)
+          console.log(`👤 Player 1: ${player1.username} (${player1.socketId})`)
+          console.log(`👤 Player 2: ${player2.username} (${player2.socketId})`)
         } else {
           console.log(`🎮 Second player joined. Auto-starting game in room: ${roomCode}`)
 
@@ -256,6 +266,10 @@ export function setupSocketHandlers(io) {
           const game = new MathRushGame(room, io, recordGameResult, room.gameState)
           games.set(roomCode, game)
           console.log(`♻️ Math Rush game instance restored for room ${roomCode}`)
+        } else if (room.game === 'word-battle') {
+          const game = new WordBattleGame(room, io, recordGameResult, room.gameState)
+          games.set(roomCode, game)
+          console.log(`♻️ Word Battle game instance restored for room ${roomCode}`)
         } else {
           const game = new TicTacToeGame(room)
           game.loadState(room.gameState)
@@ -388,6 +402,38 @@ export function setupSocketHandlers(io) {
       if (game && typeof game.requestQuestion === 'function') {
         game.requestQuestion(username)
       }
+    })
+
+    socket.on('request-word-question', (data) => {
+      const { roomCode, username, difficulty } = data || {}
+      const room = getRoom(roomCode)
+
+      if (!room || room.game !== 'word-battle') return
+
+      const game = games.get(roomCode)
+      if (game && typeof game.requestQuestion === 'function') {
+        game.requestQuestion(username, difficulty || 'easy')
+      }
+    })
+
+    socket.on('word-answer', (data) => {
+      const { roomCode, username, questionId, answer } = data || {}
+      const room = getRoom(roomCode)
+
+      if (!room) {
+        socket.emit('error', { message: 'Room not found' })
+        return
+      }
+
+      if (room.game !== 'word-battle') return
+
+      const game = games.get(roomCode)
+      if (!game) {
+        socket.emit('error', { message: 'Word Battle game not found' })
+        return
+      }
+
+      game.submitAnswer(username, questionId, answer)
     })
 
     socket.on('math-answer', (data) => {
@@ -916,7 +962,7 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
       return
     }
 
-    if (gameType === 'targetArena' || gameType === 'mathRush') {
+    if (gameType === 'targetArena' || gameType === 'mathRush' || gameType === 'wordBattle') {
       const scores = extraData.scores || {}
       const bestStreaks = extraData.bestStreaks || {}
       const questionsAnswered = extraData.questionsAnswered || {}
@@ -928,8 +974,8 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
       const player1Questions = Number(questionsAnswered[player1Username] ?? 0)
       const player2Questions = Number(questionsAnswered[player2Username] ?? 0)
 
-      const leaderboardType = gameType === 'mathRush' ? 'mathRush' : 'targetArena'
-      const gameLabel = gameType === 'mathRush' ? 'Math Rush' : 'Target Arena'
+      const leaderboardType = gameType === 'mathRush' ? 'mathRush' : gameType === 'targetArena' ? 'targetArena' : 'wordBattle'
+      const gameLabel = gameType === 'mathRush' ? 'Math Rush' : gameType === 'targetArena' ? 'Target Arena' : 'Word Battle'
 
       const p1Extra = { score: player1Score, bestStreak: player1Best, questionsAnswered: player1Questions }
       const p2Extra = { score: player2Score, bestStreak: player2Best, questionsAnswered: player2Questions }

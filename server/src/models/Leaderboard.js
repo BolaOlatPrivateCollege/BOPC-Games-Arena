@@ -35,6 +35,19 @@ function getDefaultGameStats() {
       bestStreak: 0,
       questionsAnswered: 0
     }
+    ,
+    wordBattle: {
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      totalGamesPlayed: 0,
+      winRate: 0,
+      highScore: 0,
+      totalScore: 0,
+      bestStreak: 0,
+      questionsAnswered: 0,
+      correctAnswers: 0
+    }
   }
 }
 
@@ -66,6 +79,19 @@ function normalizeGameStats(stats = {}) {
       totalScore: Number(stats?.mathRush?.totalScore ?? 0),
       bestStreak: Number(stats?.mathRush?.bestStreak ?? 0),
       questionsAnswered: Number(stats?.mathRush?.questionsAnswered ?? 0)
+    }
+    ,
+    wordBattle: {
+      wins: Number(stats?.wordBattle?.wins ?? 0),
+      losses: Number(stats?.wordBattle?.losses ?? 0),
+      draws: Number(stats?.wordBattle?.draws ?? 0),
+      totalGamesPlayed: Number(stats?.wordBattle?.totalGamesPlayed ?? 0),
+      winRate: Number(stats?.wordBattle?.winRate ?? 0),
+      highScore: Number(stats?.wordBattle?.highScore ?? 0),
+      totalScore: Number(stats?.wordBattle?.totalScore ?? 0),
+      bestStreak: Number(stats?.wordBattle?.bestStreak ?? 0),
+      questionsAnswered: Number(stats?.wordBattle?.questionsAnswered ?? 0),
+      correctAnswers: Number(stats?.wordBattle?.correctAnswers ?? 0)
     }
   }
 }
@@ -438,7 +464,7 @@ const Leaderboard = {
       throw new Error(`Invalid result type: ${result}`)
     }
 
-    if (!['global', 'ticTacToe', 'targetArena', 'mathRush'].includes(gameType)) {
+    if (!['global', 'ticTacToe', 'targetArena', 'mathRush', 'wordBattle'].includes(gameType)) {
       throw new Error(`Invalid game type: ${gameType}`)
     }
 
@@ -506,6 +532,26 @@ const Leaderboard = {
 
         if (typeof extraData.questionsAnswered === 'number') {
           stats.questionsAnswered = (stats.questionsAnswered || 0) + Number(extraData.questionsAnswered)
+        }
+      }
+      // wordBattle should update similar fields when provided
+      if (gameType === 'wordBattle') {
+        if (typeof extraData.bestStreak === 'number') {
+          stats.bestStreak = Math.max(stats.bestStreak || 0, Number(extraData.bestStreak))
+        }
+
+        if (typeof extraData.questionsAnswered === 'number') {
+          stats.questionsAnswered = (stats.questionsAnswered || 0) + Number(extraData.questionsAnswered)
+        }
+
+        if (typeof extraData.correctAnswers === 'number') {
+          stats.correctAnswers = (stats.correctAnswers || 0) + Number(extraData.correctAnswers)
+        }
+
+        if (typeof extraData.score === 'number') {
+          const score = Number(extraData.score)
+          stats.totalScore = (stats.totalScore || 0) + score
+          stats.highScore = Math.max(stats.highScore || 0, score)
         }
       }
     }

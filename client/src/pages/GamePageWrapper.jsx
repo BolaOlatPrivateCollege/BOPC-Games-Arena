@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import TicTacToePage from './TicTacToePage'
 import TargetArenaPage from './TargetArenaPage'
 import MathRushPage from './MathRushPage'
+import WordBattlePage from './WordBattlePage'
 
 export default function GamePageWrapper({ username, onLogout }) {
   const { roomCode } = useParams()
@@ -56,6 +57,10 @@ export default function GamePageWrapper({ username, onLogout }) {
 
   if (gameType === 'math-rush') {
     return <MathRushPage username={username} onLogout={onLogout} />
+  }
+
+  if (gameType === 'word-battle') {
+    return <WordBattlePage username={username} onLogout={onLogout} />
   }
 
   return <TicTacToePage username={username} onLogout={onLogout} />

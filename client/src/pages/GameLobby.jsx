@@ -163,6 +163,35 @@ export default function GameLobby({ username, onLogout }) {
                     </button>
                   </div>
                 </div>
+                <div className="rounded-3xl border border-violet-200 bg-violet-50 p-6 shadow-sm">
+                  <div className="text-5xl">🔤</div>
+                  <h3 className="mt-4 text-xl font-semibold text-slate-900">Word Battle</h3>
+                  <p className="mt-2 text-sm text-slate-600">Fast vocabulary challenges — multiplayer and solo practice.</p>
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-sm text-violet-700">Available</div>
+                  <div className="mt-6 grid gap-3">
+                    <button
+                      onClick={() => {
+                        setCreateGameType('word-battle')
+                        setShowCreateModal(true)
+                      }}
+                      className="btn btn-primary w-full py-3"
+                    >
+                      Create Room / Play Online
+                    </button>
+                    <button
+                      onClick={() => setShowJoinModal(true)}
+                      className="btn btn-secondary w-full py-3"
+                    >
+                      Join Room
+                    </button>
+                    <button
+                      onClick={() => navigate('/games/word-battle/practice')}
+                      className="btn btn-outline w-full py-3"
+                    >
+                      Solo Practice
+                    </button>
+                  </div>
+                </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm opacity-90">
                   <div className="text-5xl">♟️</div>

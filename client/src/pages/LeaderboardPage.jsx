@@ -6,7 +6,8 @@ const leaderboardTabs = [
   { key: 'global', label: 'Global' },
   { key: 'ticTacToe', label: 'Tic Tac Toe' },
   { key: 'targetArena', label: 'Target Arena' },
-  { key: 'mathRush', label: 'Math Rush' }
+  { key: 'mathRush', label: 'Math Rush' },
+  { key: 'wordBattle', label: 'Word Battle' }
 ]
 
 /**
@@ -78,7 +79,9 @@ export default function LeaderboardPage({ username, onLogout }) {
               ? 'Tic Tac Toe Leaderboard'
               : selectedGame === 'targetArena'
               ? 'Target Arena Leaderboard'
-              : 'Math Rush Leaderboard'}
+              : selectedGame === 'mathRush'
+              ? 'Math Rush Leaderboard'
+              : 'Word Battle Leaderboard'}
           </h2>
           <p className="text-gray-600">
             {selectedGame === 'global'
@@ -87,7 +90,9 @@ export default function LeaderboardPage({ username, onLogout }) {
               ? 'Ranked by Tic Tac Toe performance.'
               : selectedGame === 'targetArena'
               ? 'Ranked by Target Arena wins, high score, and total score.'
-              : 'Ranked by Math Rush wins, high score, total score, and win rate.'}
+              : selectedGame === 'mathRush'
+              ? 'Ranked by Math Rush wins, high score, total score, and win rate.'
+              : 'Ranked by Word Battle wins, high score, total score, and best streak.'}
           </p>
         </div>
 
@@ -149,6 +154,13 @@ export default function LeaderboardPage({ username, onLogout }) {
                       </>
                     )}
                     {selectedGame === 'mathRush' && (
+                      <>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">High Score</th>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">Total Score</th>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">Best Streak</th>
+                      </>
+                    )}
+                    {selectedGame === 'wordBattle' && (
                       <>
                         <th className="px-6 py-4 text-center font-bold text-gray-800">High Score</th>
                         <th className="px-6 py-4 text-center font-bold text-gray-800">Total Score</th>

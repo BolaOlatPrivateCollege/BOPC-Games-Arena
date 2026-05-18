@@ -11,6 +11,8 @@ import TicTacToeBotPage from './pages/TicTacToeBotPage'
 import TargetArenaBotPage from './pages/TargetArenaBotPage'
 import MathRushSoloPracticePage from './pages/MathRushSoloPracticePage'
 import MathRushPage from './pages/MathRushPage'
+import WordBattlePracticePage from './pages/WordBattlePracticePage'
+import WordBattlePage from './pages/WordBattlePage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import WeeklyContest from './pages/WeeklyContest'
 import AdminDashboard from './pages/AdminDashboard'
@@ -96,6 +98,10 @@ function App() {
         <Route
           path="/games/math-rush/solo"
           element={username ? <MathRushSoloPracticePage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/games/word-battle/practice"
+          element={username ? <WordBattlePracticePage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
         />
         <Route
           path="/profile"
