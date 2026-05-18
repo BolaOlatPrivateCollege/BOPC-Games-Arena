@@ -85,12 +85,13 @@ export default function TargetArenaPage({ username, onLogout }) {
       }
     })
 
-    socket.on('game-started', data => {
-      console.log('🎮 Target Arena game started')
+    socket.on('game-started', () => {
+      setGameStatus('playing')
+      setCountdownOver(false)
       setOverlay('GET READY')
       setTimeout(() => {
-        setCountdown(3)
         setOverlay(null)
+        setCountdown(3)
       }, 1200)
     })
 
@@ -98,12 +99,17 @@ export default function TargetArenaPage({ username, onLogout }) {
       if (!data) return
       setGameStatus('ended')
       setTimer(0)
+      setCountdownOver(false)
       setOverlay('TIME UP')
-      
+
+      const finalScores = data.scores || scores
+      const playerFinal = finalScores[username] ?? 0
+      const opponentFinal = finalScores[opponent] ?? 0
+
       setTimeout(() => {
-        if (scores[username] > opponentScore) {
+        if (playerFinal > opponentFinal) {
           setOverlay('YOU WIN')
-        } else if (scores[username] < opponentScore) {
+        } else if (playerFinal < opponentFinal) {
           setOverlay('YOU LOSE')
         } else {
           setOverlay('DRAW')
@@ -115,21 +121,14 @@ export default function TargetArenaPage({ username, onLogout }) {
       }, 1200)
     })
 
-    socket.on('countdown-complete', data => {
-      console.log('✓ Countdown complete')
-      setOverlay('START')
-      setOverlay('HIT THE TARGETS')
-      setTimeout(() => {
-        setOverlay(null)
-        setCountdownOver(true)
-      }, 1200)
-    })
-
     socket.on('game-reset', data => {
       setLocalTargets([])
       setGameStatus('playing')
       setTimer(60)
       setScores({})
+      setCountdown(null)
+      setCountdownOver(false)
+      setOverlay(null)
       addMessage(data.message || 'New round started', 'system')
     })
 
@@ -150,8 +149,9 @@ export default function TargetArenaPage({ username, onLogout }) {
     })
 
     return () => {
-      socket.off('roomUpdated')
+        socket.off('roomUpdated')
       socket.off('game-state-update')
+      socket.off('game-started')
       socket.off('game-ended')
       socket.off('game-reset')
       socket.off('opponent-joined')
@@ -161,7 +161,7 @@ export default function TargetArenaPage({ username, onLogout }) {
   }, [socket, roomCode, username])
 
   useEffect(() => {
-    if (gameStatus !== 'playing' || timer <= 0) {
+    if (gameStatus !== 'playing' || timer <= 0 || !countdownOver) {
       return
     }
 
@@ -170,7 +170,62 @@ export default function TargetArenaPage({ username, onLogout }) {
     }, 900)
 
     return () => clearInterval(spawnInterval)
-  }, [gameStatus, timer])
+  }, [gameStatus, timer, countdownOver])
+
+  useEffect(() => {
+    if (countdown == null) return
+
+    if (countdown > 0) {
+      setOverlay(String(countdown))
+      const timerId = setTimeout(() => {
+        setCountdown(prev => (prev ?? 0) - 1)
+      }, 1000)
+      return () => clearTimeout(timerId)
+    }
+
+    if (countdown === 0) {
+      setOverlay('START')
+      const hitTargetsId = setTimeout(() => {
+        setOverlay('HIT THE TARGETS')
+      }, 1200)
+      const beginId = setTimeout(() => {
+        setOverlay(null)
+        setCountdownOver(true)
+        setCountdown(null)
+      }, 2400)
+      return () => {
+        clearTimeout(hitTargetsId)
+        clearTimeout(beginId)
+      }
+    }
+  }, [countdown])
+
+  useEffect(() => {
+    if (countdown == null) return
+
+    if (countdown > 0) {
+      setOverlay(String(countdown))
+      const timerId = setTimeout(() => {
+        setCountdown(prev => (prev ?? 0) - 1)
+      }, 1000)
+      return () => clearTimeout(timerId)
+    }
+
+    if (countdown === 0) {
+      setOverlay('START')
+      const readyId = setTimeout(() => {
+        setOverlay('HIT THE TARGETS')
+      }, 1200)
+      const beginId = setTimeout(() => {
+        setOverlay(null)
+        setCountdownOver(true)
+      }, 2400)
+      return () => {
+        clearTimeout(readyId)
+        clearTimeout(beginId)
+      }
+    }
+  }, [countdown])
 
   useEffect(() => {
     const cleanupInterval = setInterval(() => {
@@ -326,8 +381,9 @@ export default function TargetArenaPage({ username, onLogout }) {
               <TargetArenaBoard
                 targets={localTargets}
                 onTargetClick={handleTargetClick}
-                disabled={gameStatus !== 'playing' || timer <= 0}
+                disabled={gameStatus !== 'playing' || timer <= 0 || !countdownOver}
               />
+              {overlay ? <GameOverlay message={overlay} show={Boolean(overlay)} duration={1500} /> : null}
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {TARGET_TYPES.map(type => (
                   <div key={type} className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
