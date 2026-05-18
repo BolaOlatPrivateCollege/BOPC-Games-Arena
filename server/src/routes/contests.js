@@ -69,11 +69,11 @@ router.post('/', async (req, res, next) => {
     const contest = new Contest({
       title: 'Weekly BOPC Games Challenge',
       description:
-        'Compete in Tic Tac Toe and Target Arena to climb the weekly leaderboard.',
+        'Compete in Tic Tac Toe, Target Arena, and Math Rush to climb the weekly leaderboard.',
       startDate: now,
       endDate: end,
       status: 'active',
-      allowedGames: ['ticTacToe', 'targetArena'],
+      allowedGames: ['ticTacToe', 'targetArena', 'mathRush'],
       prizeDescription: 'Weekly prize for the top student'
     })
 

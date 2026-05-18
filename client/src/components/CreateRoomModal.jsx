@@ -51,6 +51,7 @@ export default function CreateRoomModal({ username, defaultGame = 'tic-tac-toe',
           >
             <option value="tic-tac-toe">Tic Tac Toe</option>
             <option value="target-arena">Target Arena</option>
+            <option value="math-rush">Math Rush</option>
           </select>
         </div>
 

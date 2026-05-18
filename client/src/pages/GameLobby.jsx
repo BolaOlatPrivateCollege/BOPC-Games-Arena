@@ -134,6 +134,36 @@ export default function GameLobby({ username, onLogout }) {
                   </div>
                 </div>
 
+                <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+                  <div className="text-5xl">🧠</div>
+                  <h3 className="mt-4 text-xl font-semibold text-slate-900">Math Rush</h3>
+                  <p className="mt-2 text-sm text-slate-600">Speed math multiplayer where each correct answer scores points.</p>
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-700">Available</div>
+                  <div className="mt-6 grid gap-3">
+                    <button
+                      onClick={() => {
+                        setCreateGameType('math-rush')
+                        setShowCreateModal(true)
+                      }}
+                      className="btn btn-primary w-full py-3"
+                    >
+                      Create Room / Play Online
+                    </button>
+                    <button
+                      onClick={() => setShowJoinModal(true)}
+                      className="btn btn-secondary w-full py-3"
+                    >
+                      Join Room
+                    </button>
+                    <button
+                      onClick={() => navigate('/games/math-rush/solo')}
+                      className="btn btn-outline w-full py-3"
+                    >
+                      Solo Practice
+                    </button>
+                  </div>
+                </div>
+
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm opacity-90">
                   <div className="text-5xl">♟️</div>
                   <h3 className="mt-4 text-xl font-semibold text-slate-900">Checkers</h3>

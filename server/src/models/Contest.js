@@ -7,7 +7,7 @@ const contestSchema = new mongoose.Schema(
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     status: { type: String, enum: ['upcoming', 'active', 'ended'], default: 'upcoming' },
-    allowedGames: { type: [String], default: ['ticTacToe', 'targetArena'] },
+    allowedGames: { type: [String], default: ['ticTacToe', 'targetArena', 'mathRush'] },
     prizeDescription: { type: String, default: '' }
   },
   { timestamps: true }

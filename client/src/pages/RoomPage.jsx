@@ -91,10 +91,16 @@ export default function RoomPage({ username, onLogout }) {
     }
   }
 
-  const gameLabel = room?.game === 'target-arena' ? 'Target Arena' : 'Tic Tac Toe'
-  const gameDescription = room?.game === 'target-arena'
-    ? 'Invite a friend with the code and prepare to play Target Arena. Score moving targets before time runs out.'
-    : 'Invite a friend with the code and prepare to play Tic Tac Toe with easy rematch support.'
+  const gameLabel = room?.game === 'math-rush'
+    ? 'Math Rush'
+    : room?.game === 'target-arena'
+      ? 'Target Arena'
+      : 'Tic Tac Toe'
+  const gameDescription = room?.game === 'math-rush'
+    ? 'Challenge your friend in Math Rush — answer questions fast to earn the most points.'
+    : room?.game === 'target-arena'
+      ? 'Invite a friend with the code and prepare to play Target Arena. Score moving targets before time runs out.'
+      : 'Invite a friend with the code and prepare to play Tic Tac Toe with easy rematch support.'
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -157,12 +163,14 @@ export default function RoomPage({ username, onLogout }) {
               <h3 className="text-xl font-semibold text-slate-900">Game Preview</h3>
               <div className="mt-6 rounded-[1.5rem] border border-indigo-200 bg-indigo-50 p-6">
                 <div className="flex items-center gap-4">
-                  <div className="text-5xl">{room?.game === 'target-arena' ? '🎈' : '⭕'}</div>
+                  <div className="text-5xl">{room?.game === 'math-rush' ? '🧠' : room?.game === 'target-arena' ? '🎈' : '⭕'}</div>
                   <div>
                     <p className="text-lg font-semibold text-slate-900">{gameLabel}</p>
-                    <p className="mt-2 text-sm text-slate-600">{room?.game === 'target-arena'
-                      ? 'Fast-paced target scoring in a 60-second arcade-style round.'
-                      : 'Classic grid-based gameplay with quick rematches and friendly competition.'
+                    <p className="mt-2 text-sm text-slate-600">{room?.game === 'math-rush'
+                      ? 'Race against your opponent by answering math questions quickly.'
+                      : room?.game === 'target-arena'
+                        ? 'Fast-paced target scoring in a 60-second arcade-style round.'
+                        : 'Classic grid-based gameplay with quick rematches and friendly competition.'
                     }</p>
                   </div>
                 </div>

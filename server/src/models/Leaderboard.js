@@ -23,6 +23,15 @@ function getDefaultGameStats() {
       winRate: 0,
       highScore: 0,
       totalScore: 0
+    },
+    mathRush: {
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      totalGamesPlayed: 0,
+      winRate: 0,
+      highScore: 0,
+      totalScore: 0
     }
   }
 }
@@ -44,6 +53,15 @@ function normalizeGameStats(stats = {}) {
       winRate: Number(stats?.targetArena?.winRate ?? 0),
       highScore: Number(stats?.targetArena?.highScore ?? 0),
       totalScore: Number(stats?.targetArena?.totalScore ?? 0)
+    },
+    mathRush: {
+      wins: Number(stats?.mathRush?.wins ?? 0),
+      losses: Number(stats?.mathRush?.losses ?? 0),
+      draws: Number(stats?.mathRush?.draws ?? 0),
+      totalGamesPlayed: Number(stats?.mathRush?.totalGamesPlayed ?? 0),
+      winRate: Number(stats?.mathRush?.winRate ?? 0),
+      highScore: Number(stats?.mathRush?.highScore ?? 0),
+      totalScore: Number(stats?.mathRush?.totalScore ?? 0)
     }
   }
 }
@@ -153,9 +171,10 @@ function sortLeaderboard(users, game = 'global') {
       return a.username.localeCompare(b.username)
     }
 
-    if (game === 'targetArena') {
-      const aStats = normalizeGameStats(a.gameStats).targetArena
-      const bStats = normalizeGameStats(b.gameStats).targetArena
+    if (game === 'targetArena' || game === 'mathRush') {
+      const statsKey = game === 'targetArena' ? 'targetArena' : 'mathRush'
+      const aStats = normalizeGameStats(a.gameStats)[statsKey]
+      const bStats = normalizeGameStats(b.gameStats)[statsKey]
 
       if (bStats.wins !== aStats.wins) {
         return bStats.wins - aStats.wins
@@ -411,7 +430,7 @@ const Leaderboard = {
       throw new Error(`Invalid result type: ${result}`)
     }
 
-    if (!['global', 'ticTacToe', 'targetArena'].includes(gameType)) {
+    if (!['global', 'ticTacToe', 'targetArena', 'mathRush'].includes(gameType)) {
       throw new Error(`Invalid game type: ${gameType}`)
     }
 
@@ -453,8 +472,8 @@ const Leaderboard = {
           : 0
     }
 
-    if (gameType === 'targetArena') {
-      const stats = user.gameStats.targetArena
+    if (gameType === 'targetArena' || gameType === 'mathRush') {
+      const stats = user.gameStats[gameType]
       const totalGameCount =
         (stats.wins || 0) +
         (stats.losses || 0) +

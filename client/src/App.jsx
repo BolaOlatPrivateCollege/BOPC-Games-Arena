@@ -9,6 +9,8 @@ import GamePageWrapper from './pages/GamePageWrapper'
 import RoomPage from './pages/RoomPage'
 import TicTacToeBotPage from './pages/TicTacToeBotPage'
 import TargetArenaBotPage from './pages/TargetArenaBotPage'
+import MathRushSoloPracticePage from './pages/MathRushSoloPracticePage'
+import MathRushPage from './pages/MathRushPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import WeeklyContest from './pages/WeeklyContest'
 import AdminDashboard from './pages/AdminDashboard'
@@ -90,6 +92,10 @@ function App() {
         <Route
           path="/games/target-arena/solo"
           element={username ? <TargetArenaBotPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/games/math-rush/solo"
+          element={username ? <MathRushSoloPracticePage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
         />
         <Route
           path="/profile"

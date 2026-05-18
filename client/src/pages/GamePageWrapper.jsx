@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import TicTacToePage from './TicTacToePage'
 import TargetArenaPage from './TargetArenaPage'
+import MathRushPage from './MathRushPage'
 
 export default function GamePageWrapper({ username, onLogout }) {
   const { roomCode } = useParams()
@@ -51,6 +52,10 @@ export default function GamePageWrapper({ username, onLogout }) {
 
   if (gameType === 'target-arena') {
     return <TargetArenaPage username={username} onLogout={onLogout} />
+  }
+
+  if (gameType === 'math-rush') {
+    return <MathRushPage username={username} onLogout={onLogout} />
   }
 
   return <TicTacToePage username={username} onLogout={onLogout} />

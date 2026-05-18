@@ -1,6 +1,7 @@
 import { getRoom, setRoomWinner, removePlayerFromRoom } from '../models/Room.js'
 import Leaderboard from '../models/Leaderboard.js'
 import TargetArenaGame from '../models/TargetArenaGame.js'
+import MathRushGame from '../models/MathRushGame.js'
 import Contest from '../models/Contest.js'
 import ContestScore from '../models/ContestScore.js'
 import User from '../models/User.js'
@@ -204,6 +205,15 @@ export function setupSocketHandlers(io) {
           console.log(`🎮 Target Arena auto-started in room: ${roomCode}`)
           console.log(`👤 Player 1: ${player1.username} (${player1.socketId})`)
           console.log(`👤 Player 2: ${player2.username} (${player2.socketId})`)
+        } else if (room.game === 'math-rush') {
+          const game = new MathRushGame(room, io, recordGameResult, room.gameState)
+          games.set(roomCode, game)
+          room.status = 'playing'
+          room.gameState = game.getState()
+
+          console.log(`🎮 Math Rush auto-started in room: ${roomCode}`)
+          console.log(`👤 Player 1: ${player1.username} (${player1.socketId})`)
+          console.log(`👤 Player 2: ${player2.username} (${player2.socketId})`)
         } else {
           console.log(`🎮 Second player joined. Auto-starting game in room: ${roomCode}`)
 
@@ -242,6 +252,10 @@ export function setupSocketHandlers(io) {
           const game = new TargetArenaGame(room, io, recordGameResult, room.gameState)
           games.set(roomCode, game)
           console.log(`♻️ Target Arena game instance restored for room ${roomCode}`)
+        } else if (room.game === 'math-rush') {
+          const game = new MathRushGame(room, io, recordGameResult, room.gameState)
+          games.set(roomCode, game)
+          console.log(`♻️ Math Rush game instance restored for room ${roomCode}`)
         } else {
           const game = new TicTacToeGame(room)
           game.loadState(room.gameState)
@@ -362,6 +376,42 @@ export function setupSocketHandlers(io) {
       game.hitTarget(username, targetType)
     })
 
+    socket.on('request-math-question', (data) => {
+      const { roomCode, username } = data || {}
+      const room = getRoom(roomCode)
+
+      if (!room || room.game !== 'math-rush') {
+        return
+      }
+
+      const game = games.get(roomCode)
+      if (game && typeof game.requestQuestion === 'function') {
+        game.requestQuestion(username)
+      }
+    })
+
+    socket.on('math-answer', (data) => {
+      const { roomCode, username, questionId, answer } = data || {}
+      const room = getRoom(roomCode)
+
+      if (!room) {
+        socket.emit('error', { message: 'Room not found' })
+        return
+      }
+
+      if (room.game !== 'math-rush') {
+        return
+      }
+
+      const game = games.get(roomCode)
+      if (!game) {
+        socket.emit('error', { message: 'Math Rush game not found' })
+        return
+      }
+
+      game.submitAnswer(username, questionId, answer)
+    })
+
     /**
      * Start Game Event
      */
@@ -386,6 +436,13 @@ export function setupSocketHandlers(io) {
         room.gameState = game.getState()
 
         console.log(`🎮 Target Arena manually started in room: ${roomCode}`)
+      } else if (room.game === 'math-rush') {
+        const game = new MathRushGame(room, io, recordGameResult, room.gameState)
+        games.set(roomCode, game)
+        room.status = 'playing'
+        room.gameState = game.getState()
+
+        console.log(`🎮 Math Rush manually started in room: ${roomCode}`)
       } else {
         const player1 = room.players[0]
         const player2 = room.players[1]
@@ -433,7 +490,7 @@ export function setupSocketHandlers(io) {
         gameState: room.gameState
       })
 
-      if (room.game === 'target-arena') {
+      if (room.game === 'target-arena' || room.game === 'math-rush') {
         io.to(roomCode).emit('game-state-update', room.gameState)
       } else {
         io.to(roomCode).emit('game-state-update', {
@@ -646,6 +703,27 @@ export function setupSocketHandlers(io) {
         })
 
         io.to(roomCode).emit('game-state-update', room.gameState)
+      } else if (room.game === 'math-rush') {
+        const game = games.get(roomCode)
+        if (game) {
+          game.reset()
+        } else {
+          const newGame = new MathRushGame(room, io, recordGameResult, room.gameState)
+          games.set(roomCode, newGame)
+        }
+
+        room.status = 'playing'
+        room.winner = null
+
+        io.to(roomCode).emit('roomUpdated', {
+          roomCode,
+          room,
+          players: room.players,
+          roomStatus: room.status,
+          gameState: room.gameState
+        })
+
+        io.to(roomCode).emit('game-state-update', room.gameState)
       } else {
         room.status = 'playing'
         room.winner = null
@@ -746,6 +824,8 @@ export function setupSocketHandlers(io) {
           console.log('Tic Tac Toe leaderboard fetched')
         } else if (game === 'targetArena') {
           console.log('Target Arena leaderboard fetched')
+        } else if (game === 'mathRush') {
+          console.log('Math Rush leaderboard fetched')
         }
 
         socket.emit('leaderboard-data', {
@@ -836,75 +916,77 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
       return
     }
 
-    if (gameType === 'targetArena') {
+    if (gameType === 'targetArena' || gameType === 'mathRush') {
       const scores = extraData.scores || {}
 
       const player1Score = Number(scores[player1Username] ?? 0)
       const player2Score = Number(scores[player2Username] ?? 0)
+      const leaderboardType = gameType === 'mathRush' ? 'mathRush' : 'targetArena'
+      const gameLabel = gameType === 'mathRush' ? 'Math Rush' : 'Target Arena'
 
       if (resultType === 'win') {
         await Leaderboard.updateUserStats(
           player1Username,
           'win',
-          'targetArena',
+          leaderboardType,
           { score: player1Score }
         )
 
         await Leaderboard.updateUserStats(
           player2Username,
           'loss',
-          'targetArena',
+          leaderboardType,
           { score: player2Score }
         )
 
         console.log(
-          `📊 Target Arena result recorded: ${player1Username} won with ${player1Score} vs ${player2Username} with ${player2Score}`
+          `📊 ${gameLabel} result recorded: ${player1Username} won with ${player1Score} vs ${player2Username} with ${player2Score}`
         )
         // Update active weekly contest scores (if any)
         try {
           const activeContest = await Contest.getActiveContest()
           if (activeContest) {
             console.log('Active contest found:', activeContest.title)
-            await ContestScore.updateForResult(activeContest, player1Username, 'targetArena', 'win', { score: player1Score })
-            await ContestScore.updateForResult(activeContest, player2Username, 'targetArena', 'loss', { score: player2Score })
-            console.log('Weekly contest score updated for targetArena win')
+            await ContestScore.updateForResult(activeContest, player1Username, leaderboardType, 'win', { score: player1Score })
+            await ContestScore.updateForResult(activeContest, player2Username, leaderboardType, 'loss', { score: player2Score })
+            console.log(`Weekly contest score updated for ${gameLabel} win`)
           } else {
             console.log('No active contest found')
           }
         } catch (err) {
-          console.error('❌ Error updating contest scores for targetArena win:', err)
+          console.error(`❌ Error updating contest scores for ${gameLabel} win:`, err)
         }
       } else if (resultType === 'draw') {
         await Leaderboard.updateUserStats(
           player1Username,
           'draw',
-          'targetArena',
+          leaderboardType,
           { score: player1Score }
         )
 
         await Leaderboard.updateUserStats(
           player2Username,
           'draw',
-          'targetArena',
+          leaderboardType,
           { score: player2Score }
         )
 
         console.log(
-          `📊 Target Arena draw recorded: ${player1Username} (${player1Score}) and ${player2Username} (${player2Score})`
+          `📊 ${gameLabel} draw recorded: ${player1Username} (${player1Score}) and ${player2Username} (${player2Score})`
         )
         // Update active weekly contest scores (if any)
         try {
           const activeContest = await Contest.getActiveContest()
           if (activeContest) {
             console.log('Active contest found:', activeContest.title)
-            await ContestScore.updateForResult(activeContest, player1Username, 'targetArena', 'draw', { score: player1Score })
-            await ContestScore.updateForResult(activeContest, player2Username, 'targetArena', 'draw', { score: player2Score })
-            console.log('Weekly contest score updated for targetArena draw')
+            await ContestScore.updateForResult(activeContest, player1Username, leaderboardType, 'draw', { score: player1Score })
+            await ContestScore.updateForResult(activeContest, player2Username, leaderboardType, 'draw', { score: player2Score })
+            console.log(`Weekly contest score updated for ${gameLabel} draw`)
           } else {
             console.log('No active contest found')
           }
         } catch (err) {
-          console.error('❌ Error updating contest scores for targetArena draw:', err)
+          console.error(`❌ Error updating contest scores for ${gameLabel} draw:`, err)
         }
       }
 

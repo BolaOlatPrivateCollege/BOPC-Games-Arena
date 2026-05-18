@@ -17,7 +17,7 @@ const contestScoreSchema = new mongoose.Schema(
 
     gameType: {
       type: String,
-      enum: ['ticTacToe', 'targetArena'],
+      enum: ['ticTacToe', 'targetArena', 'mathRush'],
       required: true,
       index: true
     },
@@ -92,7 +92,7 @@ contestScoreSchema.statics.updateForResult = async function (
     return null
   }
 
-  const validGames = ['ticTacToe', 'targetArena']
+  const validGames = ['ticTacToe', 'targetArena', 'mathRush']
   const validResults = ['win', 'loss', 'draw']
 
   if (!validGames.includes(gameType)) {
@@ -140,7 +140,7 @@ contestScoreSchema.statics.updateForResult = async function (
     entry.points = (entry.points || 0) + 1
   }
 
-  if (gameType === 'targetArena' && typeof extraData.score === 'number') {
+  if ((gameType === 'targetArena' || gameType === 'mathRush') && typeof extraData.score === 'number') {
     const score = Number(extraData.score)
 
     entry.totalScore = (entry.totalScore || 0) + score

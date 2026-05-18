@@ -34,6 +34,8 @@ router.get('/', async (req, res) => {
       console.log('Tic Tac Toe leaderboard fetched')
     } else if (game === 'targetArena') {
       console.log('Target Arena leaderboard fetched')
+    } else if (game === 'mathRush') {
+      console.log('Math Rush leaderboard fetched')
     }
 
     res.json({
