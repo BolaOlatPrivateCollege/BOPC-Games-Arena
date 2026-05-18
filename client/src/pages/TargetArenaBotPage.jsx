@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import TargetArenaBoard from '../components/TargetArenaBoard'
@@ -25,36 +25,23 @@ function getRandomTarget() {
   }
 }
 
-function getBotRange(difficulty) {
-  if (difficulty === 'easy') return { min: 10, max: 20, delayMin: 3000, delayMax: 5000 }
-  if (difficulty === 'medium') return { min: 10, max: 30, delayMin: 2000, delayMax: 4000 }
-  return { min: 20, max: 50, delayMin: 1500, delayMax: 3000 }
-}
-
-function getRandomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-export default function TargetArenaBotPage({ username, onLogout }) {
+export default function TargetArenaSoloPracticePage({ username, onLogout }) {
   const navigate = useNavigate()
-  const [difficulty, setDifficulty] = useState('easy')
   const [gameStatus, setGameStatus] = useState('setup')
   const [timer, setTimer] = useState(60)
   const [playerScore, setPlayerScore] = useState(0)
-  const [botScore, setBotScore] = useState(0)
   const [localTargets, setLocalTargets] = useState([])
   const [resultLabel, setResultLabel] = useState('')
   const [countdown, setCountdown] = useState(null)
   const [countdownOver, setCountdownOver] = useState(false)
   const [overlay, setOverlay] = useState(null)
-  const botTimeoutRef = useRef(null)
 
   const isPlaying = gameStatus === 'playing'
 
   const scoreLabel = useMemo(() => {
-    if (gameStatus === 'setup') return 'Choose your difficulty and start practice round.'
+    if (gameStatus === 'setup') return 'Click "Start Practice" to begin your solo challenge.'
     if (isPlaying) return 'Tap targets to score points before time runs out.'
-    return 'Round complete — review your practice score.'
+    return 'Solo practice round complete — review your score.'
   }, [gameStatus, isPlaying])
 
   const handleLeaveGame = () => {
@@ -68,10 +55,13 @@ export default function TargetArenaBotPage({ username, onLogout }) {
     if (countdown === 0) {
       setOverlay('START')
       setTimeout(() => {
+        setOverlay('HIT THE TARGETS')
+      }, 1200)
+      setTimeout(() => {
         setOverlay(null)
         setCountdownOver(true)
         setGameStatus('playing')
-      }, 800)
+      }, 2400)
       return
     }
 
@@ -86,7 +76,6 @@ export default function TargetArenaBotPage({ username, onLogout }) {
   const resetRound = () => {
     setTimer(60)
     setPlayerScore(0)
-    setBotScore(0)
     setLocalTargets([])
     setResultLabel('')
     setGameStatus('countdown')
@@ -103,29 +92,11 @@ export default function TargetArenaBotPage({ username, onLogout }) {
     setGameStatus('ended')
     setLocalTargets([])
     setOverlay('TIME UP')
-    
-    let resultMsg = ''
-    if (playerScore > botScore) {
-      resultMsg = 'You won against the bot'
-    } else if (botScore > playerScore) {
-      resultMsg = 'Bot won'
-    } else {
-      resultMsg = 'Practice round ended in draw'
-    }
-    setResultLabel(resultMsg)
+    setResultLabel(`Your score: ${playerScore}`)
     
     setTimeout(() => {
-      if (playerScore > botScore) {
-        setOverlay('YOU WIN')
-      } else if (botScore > playerScore) {
-        setOverlay('YOU LOSE')
-      } else {
-        setOverlay('DRAW')
-      }
-      setTimeout(() => {
-        setOverlay(null)
-      }, 1500)
-    }, 1200)
+      setOverlay(null)
+    }, 1500)
   }
 
   const handleStartPractice = () => {
@@ -181,39 +152,6 @@ export default function TargetArenaBotPage({ username, onLogout }) {
   }, [])
 
   useEffect(() => {
-    if (gameStatus !== 'playing' || !countdownOver) {
-      if (botTimeoutRef.current) {
-        clearTimeout(botTimeoutRef.current)
-        botTimeoutRef.current = null
-      }
-      return
-    }
-
-    const { min, max, delayMin, delayMax } = getBotRange(difficulty)
-    const delay = getRandomBetween(delayMin, delayMax)
-
-    botTimeoutRef.current = setTimeout(() => {
-      setBotScore(prev => prev + getRandomBetween(min, max))
-    }, delay)
-
-    return () => {
-      if (botTimeoutRef.current) {
-        clearTimeout(botTimeoutRef.current)
-        botTimeoutRef.current = null
-      }
-    }
-  }, [gameStatus, botScore, difficulty, timer, countdownOver])
-
-  useEffect(() => {
-    if (gameStatus === 'ended') {
-      if (botTimeoutRef.current) {
-        clearTimeout(botTimeoutRef.current)
-        botTimeoutRef.current = null
-      }
-    }
-  }, [gameStatus])
-
-  useEffect(() => {
     if (timer === 0 && isPlaying) {
       endRound()
     }
@@ -228,9 +166,9 @@ export default function TargetArenaBotPage({ username, onLogout }) {
         <div className="rounded-[2rem] bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 p-6 text-white shadow-2xl shadow-slate-900/20">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-white/80">Practice Mode</p>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight">Target Arena Vs Bot</h1>
-              <p className="mt-3 max-w-2xl text-sm text-white/80">Practice Mode — Bot games do not count toward leaderboards.</p>
+              <p className="text-sm uppercase tracking-[0.24em] text-white/80">Solo Practice</p>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight">Target Arena Solo Practice</h1>
+              <p className="mt-3 max-w-2xl text-sm text-white/80">Practice scores do not count toward leaderboards.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <button
@@ -253,20 +191,9 @@ export default function TargetArenaBotPage({ username, onLogout }) {
           <div className="rounded-[2rem] bg-white p-6 shadow-xl shadow-slate-200/80">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-cyan-600">Difficulty</p>
-                <h2 className="mt-2 text-3xl font-bold text-slate-900">Choose a bot level</h2>
-                <p className="mt-3 text-sm text-slate-600">Easy, Medium, or Hard practice scoring.</p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {['easy', 'medium', 'hard'].map(level => (
-                  <button
-                    key={level}
-                    onClick={() => setDifficulty(level)}
-                    className={`rounded-3xl px-5 py-3 text-sm font-semibold transition ${difficulty === level ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-                  >
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
-                  </button>
-                ))}
+                <p className="text-sm uppercase tracking-[0.2em] text-cyan-600">Your Performance</p>
+                <h2 className="mt-2 text-3xl font-bold text-slate-900">Solo practice challenge</h2>
+                <p className="mt-3 text-sm text-slate-600">Hit targets as fast as you can for 60 seconds.</p>
               </div>
             </div>
 
@@ -277,9 +204,9 @@ export default function TargetArenaBotPage({ username, onLogout }) {
                 <p className="mt-2 text-sm text-slate-600">Tap targets quickly to earn points.</p>
               </div>
               <div className="rounded-[1.5rem] bg-slate-50 p-5 shadow-sm">
-                <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Bot score</p>
-                <p className="mt-3 text-4xl font-bold text-slate-900">{botScore}</p>
-                <p className="mt-2 text-sm text-slate-600">Bot updates automatically during the round.</p>
+                <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Time left</p>
+                <p className="mt-3 text-4xl font-bold text-slate-900">{timer}s</p>
+                <p className="mt-2 text-sm text-slate-600">Challenge ends when timer reaches zero.</p>
               </div>
             </div>
           </div>
@@ -296,15 +223,9 @@ export default function TargetArenaBotPage({ username, onLogout }) {
                 <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Round status</p>
                 <p className="mt-3 text-lg font-semibold text-slate-900">{scoreLabel}</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] bg-slate-50 p-5">
-                  <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Time left</p>
-                  <p className="mt-3 text-4xl font-bold text-slate-900">{timer}s</p>
-                </div>
-                <div className="rounded-[1.5rem] bg-slate-50 p-5">
-                  <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Result</p>
-                  <p className="mt-3 text-2xl font-bold text-slate-900">{resultLabel || 'Practice only'}</p>
-                </div>
+              <div className="rounded-[1.5rem] bg-slate-50 p-5">
+                <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Final score</p>
+                <p className="mt-3 text-2xl font-bold text-slate-900">{resultLabel || 'Not started'}</p>
               </div>
             </div>
           </div>
@@ -317,7 +238,7 @@ export default function TargetArenaBotPage({ username, onLogout }) {
               <h2 className="mt-3 text-3xl font-bold text-slate-900">Hit the targets before the clock ends</h2>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700">
-              <span>Not counted on leaderboards</span>
+              <span>Practice mode — not counted</span>
             </div>
           </div>
 

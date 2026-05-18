@@ -126,10 +126,10 @@ export default function GameLobby({ username, onLogout }) {
                       Join Room
                     </button>
                     <button
-                      onClick={() => navigate('/games/target-arena/bot')}
+                      onClick={() => navigate('/games/target-arena/solo')}
                       className="btn btn-outline w-full py-3"
                     >
-                      Play with Bot
+                      Solo Practice
                     </button>
                   </div>
                 </div>

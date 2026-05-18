@@ -88,7 +88,7 @@ function App() {
           element={username ? <TicTacToeBotPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
         />
         <Route
-          path="/games/target-arena/bot"
+          path="/games/target-arena/solo"
           element={username ? <TargetArenaBotPage username={username} onLogout={handleLogout} /> : <Navigate to="/" />}
         />
         <Route
