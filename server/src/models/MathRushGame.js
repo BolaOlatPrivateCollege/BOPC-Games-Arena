@@ -10,9 +10,15 @@ export default class MathRushGame {
     this.remainingSeconds = this.duration
     this.scores = {}
     this.currentQuestions = {}
+    this.currentStreaks = {}
+    this.bestStreaks = {}
+    this.questionsAnswered = {}
 
     room.players.forEach(player => {
       this.scores[player.username] = 0
+      this.currentStreaks[player.username] = 0
+      this.bestStreaks[player.username] = 0
+      this.questionsAnswered[player.username] = 0
     })
 
     if (existingState && existingState.gameType === 'math-rush') {
@@ -152,8 +158,15 @@ export default class MathRushGame {
     const isCorrect = Number(answer) === current.answer
     if (isCorrect) {
       this.scores[username] = (this.scores[username] || 0) + current.points
+      this.currentStreaks[username] = (this.currentStreaks[username] || 0) + 1
+      this.bestStreaks[username] = Math.max(this.bestStreaks[username] || 0, this.currentStreaks[username])
     }
-
+    else {
+      // reset current streak on incorrect answer
+      this.currentStreaks[username] = 0
+    }
+    // Count answered questions (correct or not)
+    this.questionsAnswered[username] = (this.questionsAnswered[username] || 0) + 1
     delete this.currentQuestions[username]
     this.broadcastState()
 
@@ -227,13 +240,24 @@ export default class MathRushGame {
       }
     })
 
+    console.log('Math Rush round ended', { room: this.room.roomCode, scores: { [player1?.username]: score1, [player2?.username]: score2 } })
     if (this.onGameEnd && player1?.username && player2?.username) {
       const extraData = {
         scores: {
           [player1.username]: score1,
           [player2.username]: score2
         }
+      , bestStreaks: {
+           [player1.username]: this.bestStreaks[player1.username] || 0,
+           [player2.username]: this.bestStreaks[player2.username] || 0
+         },
+        questionsAnswered: {
+           [player1.username]: this.questionsAnswered[player1.username] || 0,
+           [player2.username]: this.questionsAnswered[player2.username] || 0
+         }
       }
+
+      console.log('Saving result for gameType: mathRush')
 
       if (isDraw) {
         this.onGameEnd('mathRush', 'draw', player1.username, player2.username, extraData)
@@ -241,6 +265,8 @@ export default class MathRushGame {
         const loser = winner === player1.username ? player2.username : player1.username
         this.onGameEnd('mathRush', 'win', winner, loser, extraData)
       }
+
+      console.log('Math Rush result recorded')
     }
   }
 

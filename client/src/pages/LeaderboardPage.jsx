@@ -5,7 +5,8 @@ import { useSocket } from '../hooks/useSocket'
 const leaderboardTabs = [
   { key: 'global', label: 'Global' },
   { key: 'ticTacToe', label: 'Tic Tac Toe' },
-  { key: 'targetArena', label: 'Target Arena' }
+  { key: 'targetArena', label: 'Target Arena' },
+  { key: 'mathRush', label: 'Math Rush' }
 ]
 
 /**
@@ -71,14 +72,22 @@ export default function LeaderboardPage({ username, onLogout }) {
         {/* Page Header */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {selectedGame === 'global' ? 'Global Leaderboard' : selectedGame === 'ticTacToe' ? 'Tic Tac Toe Leaderboard' : 'Target Arena Leaderboard'}
+            {selectedGame === 'global'
+              ? 'Global Leaderboard'
+              : selectedGame === 'ticTacToe'
+              ? 'Tic Tac Toe Leaderboard'
+              : selectedGame === 'targetArena'
+              ? 'Target Arena Leaderboard'
+              : 'Math Rush Leaderboard'}
           </h2>
           <p className="text-gray-600">
             {selectedGame === 'global'
               ? 'Combined results across all games.'
               : selectedGame === 'ticTacToe'
               ? 'Ranked by Tic Tac Toe performance.'
-              : 'Ranked by Target Arena wins, high score, and total score.'}
+              : selectedGame === 'targetArena'
+              ? 'Ranked by Target Arena wins, high score, and total score.'
+              : 'Ranked by Math Rush wins, high score, total score, and win rate.'}
           </p>
         </div>
 
@@ -139,6 +148,13 @@ export default function LeaderboardPage({ username, onLogout }) {
                         <th className="px-6 py-4 text-center font-bold text-gray-800">Total Score</th>
                       </>
                     )}
+                    {selectedGame === 'mathRush' && (
+                      <>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">High Score</th>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">Total Score</th>
+                        <th className="px-6 py-4 text-center font-bold text-gray-800">Best Streak</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -148,6 +164,8 @@ export default function LeaderboardPage({ username, onLogout }) {
                       ? gameStats.ticTacToe || {}
                       : selectedGame === 'targetArena'
                       ? gameStats.targetArena || {}
+                      : selectedGame === 'mathRush'
+                      ? gameStats.mathRush || {}
                       : {}
 
                     const wins = selectedGame === 'global'
@@ -232,6 +250,19 @@ export default function LeaderboardPage({ username, onLogout }) {
                             </td>
                             <td className="px-6 py-4 text-center font-semibold text-teal-600">
                               {playerGameStats.totalScore || 0}
+                            </td>
+                          </>
+                        )}
+                        {selectedGame === 'mathRush' && (
+                          <>
+                            <td className="px-6 py-4 text-center font-semibold text-purple-600">
+                              {playerGameStats.highScore || 0}
+                            </td>
+                            <td className="px-6 py-4 text-center font-semibold text-teal-600">
+                              {playerGameStats.totalScore || 0}
+                            </td>
+                            <td className="px-6 py-4 text-center font-semibold text-indigo-600">
+                              {playerGameStats.bestStreak || 0}
                             </td>
                           </>
                         )}

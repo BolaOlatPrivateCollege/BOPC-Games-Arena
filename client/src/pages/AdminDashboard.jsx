@@ -156,9 +156,11 @@ const [adminLeaderboardError, setAdminLeaderboardError] = useState(null)
   const [globalLeaderboard, setGlobalLeaderboard] = useState([])
   const [ticLeaderboard, setTicLeaderboard] = useState([])
   const [targetLeaderboard, setTargetLeaderboard] = useState([])
+  const [mathLeaderboard, setMathLeaderboard] = useState([])
   const [weeklyAllLb, setWeeklyAllLb] = useState([])
   const [weeklyTicLb, setWeeklyTicLb] = useState([])
   const [weeklyTargetLb, setWeeklyTargetLb] = useState([])
+  const [weeklyMathLb, setWeeklyMathLb] = useState([])
   const [winners, setWinners] = useState([])
   const [lbLoading, setLbLoading] = useState(false)
   const [lbError, setLbError] = useState(null)
@@ -181,10 +183,11 @@ const [adminLeaderboardError, setAdminLeaderboardError] = useState(null)
       setLbError(null)
       setLbLoading(true)
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-      const [gRes, tRes, taRes] = await Promise.all([
+      const [gRes, tRes, taRes, mRes] = await Promise.all([
         fetch(`${apiUrl}/api/leaderboard`),
         fetch(`${apiUrl}/api/leaderboard?game=ticTacToe`),
-        fetch(`${apiUrl}/api/leaderboard?game=targetArena`)
+        fetch(`${apiUrl}/api/leaderboard?game=targetArena`),
+        fetch(`${apiUrl}/api/leaderboard?game=mathRush`)
       ])
 
       if (!gRes.ok || !tRes.ok || !taRes.ok) {
@@ -194,10 +197,12 @@ const [adminLeaderboardError, setAdminLeaderboardError] = useState(null)
       const gJson = gRes.ok ? await gRes.json().catch(() => []) : []
       const tJson = tRes.ok ? await tRes.json().catch(() => []) : []
       const taJson = taRes.ok ? await taRes.json().catch(() => []) : []
+      const mJson = mRes.ok ? await mRes.json().catch(() => []) : []
 
       setGlobalLeaderboard(Array.isArray(gJson) ? gJson : (gJson.leaderboard || []))
       setTicLeaderboard(Array.isArray(tJson) ? tJson : (tJson.leaderboard || []))
       setTargetLeaderboard(Array.isArray(taJson) ? taJson : (taJson.leaderboard || []))
+      setMathLeaderboard(Array.isArray(mJson) ? mJson : (mJson.leaderboard || []))
     } catch (err) {
       console.error('fetchAllLeaderboards', err)
       setLbError('Unable to load leaderboard')
@@ -213,10 +218,11 @@ const [adminLeaderboardError, setAdminLeaderboardError] = useState(null)
       setLbLoading(true)
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
       // prefer `game=all` alias for all-games
-      const [allRes, tRes, taRes] = await Promise.all([
+      const [allRes, tRes, taRes, mRes] = await Promise.all([
         fetch(`${apiUrl}/api/contests/${contestId}/leaderboard?game=all`),
         fetch(`${apiUrl}/api/contests/${contestId}/leaderboard?game=ticTacToe`),
-        fetch(`${apiUrl}/api/contests/${contestId}/leaderboard?game=targetArena`)
+        fetch(`${apiUrl}/api/contests/${contestId}/leaderboard?game=targetArena`),
+        fetch(`${apiUrl}/api/contests/${contestId}/leaderboard?game=mathRush`)
       ])
 
       if (!allRes.ok || !tRes.ok || !taRes.ok) {
@@ -226,10 +232,12 @@ const [adminLeaderboardError, setAdminLeaderboardError] = useState(null)
       const allJson = allRes.ok ? await allRes.json().catch(() => []) : []
       const tJson = tRes.ok ? await tRes.json().catch(() => []) : []
       const taJson = taRes.ok ? await taRes.json().catch(() => []) : []
+      const mJson = mRes.ok ? await mRes.json().catch(() => []) : []
 
       setWeeklyAllLb(Array.isArray(allJson) ? allJson : (allJson.leaderboard || []))
       setWeeklyTicLb(Array.isArray(tJson) ? tJson : (tJson.leaderboard || []))
       setWeeklyTargetLb(Array.isArray(taJson) ? taJson : (taJson.leaderboard || []))
+      setWeeklyMathLb(Array.isArray(mJson) ? mJson : (mJson.leaderboard || []))
     } catch (err) {
       console.error('fetchWeeklyLeaderboards', err)
       setLbError('Unable to load leaderboard')
@@ -447,9 +455,9 @@ const [adminLeaderboardError, setAdminLeaderboardError] = useState(null)
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Leaderboards</h3>
 
                   <div className="flex gap-2 flex-wrap mb-4">
-                    {['global','ticTacToe','targetArena','weeklyAll','weeklyTic','weeklyTarget'].map(key => (
+                    {['global','ticTacToe','targetArena','mathRush','weeklyAll','weeklyTic','weeklyTarget','weeklyMath'].map(key => (
                       <button key={key} onClick={() => setSelectedLeaderboard(key)} className={`px-4 py-2 rounded ${selectedLeaderboard===key ? 'bg-indigo-600 text-white' : 'bg-white ring-1 ring-gray-200'}`}>
-                        {key === 'global' ? 'Global' : key === 'ticTacToe' ? 'Tic Tac Toe' : key === 'targetArena' ? 'Target Arena' : key === 'weeklyAll' ? 'Weekly All Games' : key === 'weeklyTic' ? 'Weekly Tic Tac Toe' : 'Weekly Target Arena'}
+                        {key === 'global' ? 'Global' : key === 'ticTacToe' ? 'Tic Tac Toe' : key === 'targetArena' ? 'Target Arena' : key === 'mathRush' ? 'Math Rush' : key === 'weeklyAll' ? 'Weekly All Games' : key === 'weeklyTic' ? 'Weekly Tic Tac Toe' : key === 'weeklyTarget' ? 'Weekly Target Arena' : 'Weekly Math Rush'}
                       </button>
                     ))}
                   </div>
@@ -467,11 +475,15 @@ const [adminLeaderboardError, setAdminLeaderboardError] = useState(null)
                           ? (ticLeaderboard || [])
                           : selectedLeaderboard === 'targetArena'
                           ? (targetLeaderboard || [])
+                          : selectedLeaderboard === 'mathRush'
+                          ? (mathLeaderboard || [])
                           : selectedLeaderboard === 'weeklyAll'
                           ? (weeklyAllLb || [])
                           : selectedLeaderboard === 'weeklyTic'
                           ? (weeklyTicLb || [])
-                          : (weeklyTargetLb || [])
+                          : selectedLeaderboard === 'weeklyTarget'
+                          ? (weeklyTargetLb || [])
+                          : (weeklyMathLb || [])
 
                         return (
                           <table className="w-full min-w-[720px] text-sm">

@@ -31,7 +31,9 @@ function getDefaultGameStats() {
       totalGamesPlayed: 0,
       winRate: 0,
       highScore: 0,
-      totalScore: 0
+      totalScore: 0,
+      bestStreak: 0,
+      questionsAnswered: 0
     }
   }
 }
@@ -61,7 +63,9 @@ function normalizeGameStats(stats = {}) {
       totalGamesPlayed: Number(stats?.mathRush?.totalGamesPlayed ?? 0),
       winRate: Number(stats?.mathRush?.winRate ?? 0),
       highScore: Number(stats?.mathRush?.highScore ?? 0),
-      totalScore: Number(stats?.mathRush?.totalScore ?? 0)
+      totalScore: Number(stats?.mathRush?.totalScore ?? 0),
+      bestStreak: Number(stats?.mathRush?.bestStreak ?? 0),
+      questionsAnswered: Number(stats?.mathRush?.questionsAnswered ?? 0)
     }
   }
 }
@@ -186,6 +190,10 @@ function sortLeaderboard(users, game = 'global') {
 
       if (bStats.totalScore !== aStats.totalScore) {
         return bStats.totalScore - aStats.totalScore
+      }
+
+      if (bStats.winRate !== aStats.winRate) {
+        return bStats.winRate - aStats.winRate
       }
 
       return a.username.localeCompare(b.username)
@@ -489,6 +497,16 @@ const Leaderboard = {
         const score = Number(extraData.score)
         stats.totalScore = (stats.totalScore || 0) + score
         stats.highScore = Math.max(stats.highScore || 0, score)
+      }
+      // mathRush-specific additional stats
+      if (gameType === 'mathRush') {
+        if (typeof extraData.bestStreak === 'number') {
+          stats.bestStreak = Math.max(stats.bestStreak || 0, Number(extraData.bestStreak))
+        }
+
+        if (typeof extraData.questionsAnswered === 'number') {
+          stats.questionsAnswered = (stats.questionsAnswered || 0) + Number(extraData.questionsAnswered)
+        }
       }
     }
 

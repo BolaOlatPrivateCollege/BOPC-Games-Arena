@@ -52,6 +52,16 @@ const contestScoreSchema = new mongoose.Schema(
       default: 0
     },
 
+    bestStreak: {
+      type: Number,
+      default: 0
+    },
+
+    questionsAnswered: {
+      type: Number,
+      default: 0
+    },
+
     gamesPlayed: {
       type: Number,
       default: 0
@@ -147,6 +157,16 @@ contestScoreSchema.statics.updateForResult = async function (
     entry.highScore = Math.max(entry.highScore || 0, score)
   }
 
+  if (gameType === 'mathRush') {
+    if (typeof extraData.bestStreak === 'number') {
+      entry.bestStreak = Math.max(entry.bestStreak || 0, Number(extraData.bestStreak))
+    }
+
+    if (typeof extraData.questionsAnswered === 'number') {
+      entry.questionsAnswered = (entry.questionsAnswered || 0) + Number(extraData.questionsAnswered)
+    }
+  }
+
   entry.gamesPlayed =
     (entry.wins || 0) +
     (entry.losses || 0) +
@@ -237,7 +257,9 @@ contestScoreSchema.statics.getLeaderboard = async function (
           highScore: 0,
           totalScore: 0,
           attempts: 0,
-          lastPlayedAt: entry.lastPlayedAt || null
+          lastPlayedAt: entry.lastPlayedAt || null,
+          bestStreak: 0,
+          questionsAnswered: 0
         })
       }
 
@@ -250,6 +272,8 @@ contestScoreSchema.statics.getLeaderboard = async function (
       row.gamesPlayed += Number(entry.gamesPlayed || 0)
       row.totalScore += Number(entry.totalScore || 0)
       row.highScore = Math.max(row.highScore || 0, Number(entry.highScore || 0))
+      row.bestStreak = Math.max(row.bestStreak || 0, Number(entry.bestStreak || 0))
+      row.questionsAnswered += Number(entry.questionsAnswered || 0)
       row.attempts += Number(entry.attempts || 0)
 
       if (

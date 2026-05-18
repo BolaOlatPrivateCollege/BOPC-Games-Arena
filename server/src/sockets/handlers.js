@@ -918,38 +918,39 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
 
     if (gameType === 'targetArena' || gameType === 'mathRush') {
       const scores = extraData.scores || {}
+      const bestStreaks = extraData.bestStreaks || {}
+      const questionsAnswered = extraData.questionsAnswered || {}
 
       const player1Score = Number(scores[player1Username] ?? 0)
       const player2Score = Number(scores[player2Username] ?? 0)
+      const player1Best = Number(bestStreaks[player1Username] ?? 0)
+      const player2Best = Number(bestStreaks[player2Username] ?? 0)
+      const player1Questions = Number(questionsAnswered[player1Username] ?? 0)
+      const player2Questions = Number(questionsAnswered[player2Username] ?? 0)
+
       const leaderboardType = gameType === 'mathRush' ? 'mathRush' : 'targetArena'
       const gameLabel = gameType === 'mathRush' ? 'Math Rush' : 'Target Arena'
 
+      const p1Extra = { score: player1Score, bestStreak: player1Best, questionsAnswered: player1Questions }
+      const p2Extra = { score: player2Score, bestStreak: player2Best, questionsAnswered: player2Questions }
+
       if (resultType === 'win') {
-        await Leaderboard.updateUserStats(
-          player1Username,
-          'win',
-          leaderboardType,
-          { score: player1Score }
-        )
+        await Leaderboard.updateUserStats(player1Username, 'win', leaderboardType, p1Extra)
+        console.log(`Game-specific stats updated for ${player1Username}: game=${leaderboardType}`)
 
-        await Leaderboard.updateUserStats(
-          player2Username,
-          'loss',
-          leaderboardType,
-          { score: player2Score }
-        )
+        await Leaderboard.updateUserStats(player2Username, 'loss', leaderboardType, p2Extra)
+        console.log(`Game-specific stats updated for ${player2Username}: game=${leaderboardType}`)
 
-        console.log(
-          `📊 ${gameLabel} result recorded: ${player1Username} won with ${player1Score} vs ${player2Username} with ${player2Score}`
-        )
+        console.log(`📊 ${gameLabel} result recorded: ${player1Username} won with ${player1Score} vs ${player2Username} with ${player2Score}`)
+
         // Update active weekly contest scores (if any)
         try {
           const activeContest = await Contest.getActiveContest()
           if (activeContest) {
             console.log('Active contest found:', activeContest.title)
-            await ContestScore.updateForResult(activeContest, player1Username, leaderboardType, 'win', { score: player1Score })
-            await ContestScore.updateForResult(activeContest, player2Username, leaderboardType, 'loss', { score: player2Score })
-            console.log(`Weekly contest score updated for ${gameLabel} win`)
+            await ContestScore.updateForResult(activeContest, player1Username, leaderboardType, 'win', p1Extra)
+            await ContestScore.updateForResult(activeContest, player2Username, leaderboardType, 'loss', p2Extra)
+            console.log(`Weekly contest score updated: game=${leaderboardType}`)
           } else {
             console.log('No active contest found')
           }
@@ -957,31 +958,21 @@ async function recordGameResult(gameType, resultType, player1Username, player2Us
           console.error(`❌ Error updating contest scores for ${gameLabel} win:`, err)
         }
       } else if (resultType === 'draw') {
-        await Leaderboard.updateUserStats(
-          player1Username,
-          'draw',
-          leaderboardType,
-          { score: player1Score }
-        )
+        await Leaderboard.updateUserStats(player1Username, 'draw', leaderboardType, p1Extra)
+        console.log(`Game-specific stats updated for ${player1Username}: game=${leaderboardType}`)
 
-        await Leaderboard.updateUserStats(
-          player2Username,
-          'draw',
-          leaderboardType,
-          { score: player2Score }
-        )
+        await Leaderboard.updateUserStats(player2Username, 'draw', leaderboardType, p2Extra)
+        console.log(`Game-specific stats updated for ${player2Username}: game=${leaderboardType}`)
 
-        console.log(
-          `📊 ${gameLabel} draw recorded: ${player1Username} (${player1Score}) and ${player2Username} (${player2Score})`
-        )
+        console.log(`📊 ${gameLabel} draw recorded: ${player1Username} (${player1Score}) and ${player2Username} (${player2Score})`)
         // Update active weekly contest scores (if any)
         try {
           const activeContest = await Contest.getActiveContest()
           if (activeContest) {
             console.log('Active contest found:', activeContest.title)
-            await ContestScore.updateForResult(activeContest, player1Username, leaderboardType, 'draw', { score: player1Score })
-            await ContestScore.updateForResult(activeContest, player2Username, leaderboardType, 'draw', { score: player2Score })
-            console.log(`Weekly contest score updated for ${gameLabel} draw`)
+            await ContestScore.updateForResult(activeContest, player1Username, leaderboardType, 'draw', p1Extra)
+            await ContestScore.updateForResult(activeContest, player2Username, leaderboardType, 'draw', p2Extra)
+            console.log(`Weekly contest score updated: game=${leaderboardType}`)
           } else {
             console.log('No active contest found')
           }
