@@ -390,7 +390,7 @@ export function setupSocketHandlers(io) {
       game.hitTarget(username, targetType)
     })
 
-    socket.on('request-math-question', (data) => {
+    socket.on('request-math-question', async (data) => {
       const { roomCode, username } = data || {}
       const room = getRoom(roomCode)
 
@@ -400,11 +400,11 @@ export function setupSocketHandlers(io) {
 
       const game = games.get(roomCode)
       if (game && typeof game.requestQuestion === 'function') {
-        game.requestQuestion(username)
+        await game.requestQuestion(username)
       }
     })
 
-    socket.on('request-word-question', (data) => {
+    socket.on('request-word-question', async (data) => {
       const { roomCode, username, difficulty } = data || {}
       const room = getRoom(roomCode)
 
@@ -412,7 +412,7 @@ export function setupSocketHandlers(io) {
 
       const game = games.get(roomCode)
       if (game && typeof game.requestQuestion === 'function') {
-        game.requestQuestion(username, difficulty || 'easy')
+        await game.requestQuestion(username, difficulty || 'easy')
       }
     })
 

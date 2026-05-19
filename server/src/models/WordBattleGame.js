@@ -1,3 +1,5 @@
+import Question from './Question.js'
+
 // Simple Word Battle game server-side logic
 export default class WordBattleGame {
   constructor(room, io, onGameEnd, existingState = null) {
@@ -50,6 +52,26 @@ export default class WordBattleGame {
     return pool[Math.floor(Math.random() * pool.length)]
   }
 
+  async loadQuestionFromBank(difficulty = 'easy') {
+    try {
+      const query = {
+        gameType: 'wordBattle',
+        difficulty,
+        isActive: true
+      }
+
+      const count = await Question.countDocuments(query).exec()
+      if (!count) return null
+
+      const randomIndex = Math.floor(Math.random() * count)
+      const docs = await Question.find(query).skip(randomIndex).limit(1).exec()
+      return docs[0] || null
+    } catch (err) {
+      console.warn('WordBattle bank query failed:', err.message)
+      return null
+    }
+  }
+
   start() {
     this.room.status = 'playing'
     this.gameOver = false
@@ -80,20 +102,34 @@ export default class WordBattleGame {
     if (next <= 0) this.end()
   }
 
-  requestQuestion(username, difficulty = 'easy') {
+  async requestQuestion(username, difficulty = 'easy') {
     if (this.gameOver) return
     const player = this.room.players.find(p => p.username === username)
     if (!player) return
 
-    const q = this.pickQuestion(difficulty)
-    this.currentQuestions[username] = { ...q, ts: Date.now() }
+    let question = await this.loadQuestionFromBank(difficulty)
+    if (question) {
+      question = {
+        id: question._id.toString(),
+        question: question.questionText,
+        options: question.options,
+        correctAnswer: question.correctAnswer,
+        difficulty: question.difficulty,
+        ts: Date.now()
+      }
+    } else {
+      const q = this.pickQuestion(difficulty)
+      question = { ...q, ts: Date.now() }
+    }
+
+    this.currentQuestions[username] = question
 
     if (player.socketId) {
       this.io.to(player.socketId).emit('word-question', {
-        questionId: q.id,
-        question: q.question,
-        options: q.options,
-        difficulty: q.difficulty
+        questionId: question.id,
+        question: question.question,
+        options: question.options,
+        difficulty: question.difficulty
       })
     }
   }

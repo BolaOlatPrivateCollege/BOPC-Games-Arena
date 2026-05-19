@@ -209,7 +209,18 @@ export default function MathRushPage({ username, onLogout }) {
       roomCode,
       username,
       questionId: question.questionId || question.id,
-      answer: Number(answer)
+      answer
+    })
+    setAnswerInput('')
+  }
+
+  const handleChooseOption = (option) => {
+    if (!socket || !question || gameStatus !== 'playing') return
+    socket.emit('math-answer', {
+      roomCode,
+      username,
+      questionId: question.questionId || question.id,
+      answer: option
     })
     setAnswerInput('')
   }
@@ -327,6 +338,21 @@ export default function MathRushPage({ username, onLogout }) {
                 <div className="rounded-[1.5rem] bg-slate-50 p-5">
                   <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Question</p>
                   <p className="mt-3 text-2xl font-semibold text-slate-900">{question?.question || 'Waiting for the next math problem...'}</p>
+                  {question?.options?.length > 0 && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {question.options.map((option, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleChooseOption(option)}
+                          disabled={gameStatus !== 'playing'}
+                          className="btn btn-outline text-left py-4"
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <p className="mt-2 text-sm text-slate-600">Answer quickly to earn points.</p>
                 </div>
                 <form onSubmit={handleSubmitAnswer} className="grid gap-3 sm:grid-cols-[1fr_auto]">

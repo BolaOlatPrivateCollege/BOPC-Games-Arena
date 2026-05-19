@@ -1,3 +1,5 @@
+import Question from './Question.js'
+
 export default class MathRushGame {
   constructor(room, io, onGameEnd, existingState = null) {
     this.room = room
@@ -76,6 +78,35 @@ export default class MathRushGame {
     }
   }
 
+  getPointsForDifficulty(difficulty = 'easy') {
+    if (difficulty === 'hard') return 20
+    if (difficulty === 'medium') return 15
+    return 10
+  }
+
+  async loadQuestionFromBank(filters = {}) {
+    try {
+      const query = {
+        gameType: 'mathRush',
+        isActive: true
+      }
+
+      if (filters.category) query.category = filters.category
+      if (filters.difficulty) query.difficulty = filters.difficulty
+      if (filters.classLevel) query.classLevel = filters.classLevel
+
+      const count = await Question.countDocuments(query).exec()
+      if (!count) return null
+
+      const randomIndex = Math.floor(Math.random() * count)
+      const docs = await Question.find(query).skip(randomIndex).limit(1).exec()
+      return docs[0] || null
+    } catch (err) {
+      console.warn('MathRush bank query failed:', err.message)
+      return null
+    }
+  }
+
   start() {
     this.room.status = 'playing'
     this.gameOver = false
@@ -112,7 +143,7 @@ export default class MathRushGame {
     }
   }
 
-  requestQuestion(username) {
+  async requestQuestion(username, filters = {}) {
     if (this.gameOver) {
       return
     }
@@ -122,14 +153,30 @@ export default class MathRushGame {
       return
     }
 
-    const question = this.generateQuestion()
+    let question = await this.loadQuestionFromBank(filters)
+    if (question) {
+      const points = this.getPointsForDifficulty(question.difficulty)
+      question = {
+        id: question._id.toString(),
+        questionText: question.questionText,
+        question: question.questionText,
+        options: question.options,
+        correctAnswer: question.correctAnswer,
+        difficulty: question.difficulty,
+        points
+      }
+    } else {
+      question = this.generateQuestion()
+    }
+
     this.currentQuestions[username] = question
 
     if (player.socketId) {
       this.io.to(player.socketId).emit('math-question', {
         questionId: question.id,
         question: question.question,
-        points: question.points
+        points: question.points,
+        options: question.options || []
       })
     }
   }
@@ -155,17 +202,21 @@ export default class MathRushGame {
       return
     }
 
-    const isCorrect = Number(answer) === current.answer
+    const userAnswer = String(answer).trim()
+    const correctAnswer = typeof current.correctAnswer !== 'undefined'
+      ? String(current.correctAnswer).trim()
+      : String(current.answer).trim()
+
+    const isCorrect = userAnswer === correctAnswer
+
     if (isCorrect) {
       this.scores[username] = (this.scores[username] || 0) + current.points
       this.currentStreaks[username] = (this.currentStreaks[username] || 0) + 1
       this.bestStreaks[username] = Math.max(this.bestStreaks[username] || 0, this.currentStreaks[username])
-    }
-    else {
-      // reset current streak on incorrect answer
+    } else {
       this.currentStreaks[username] = 0
     }
-    // Count answered questions (correct or not)
+
     this.questionsAnswered[username] = (this.questionsAnswered[username] || 0) + 1
     delete this.currentQuestions[username]
     this.broadcastState()

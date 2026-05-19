@@ -1,8 +1,8 @@
+import './loadEnv.js'
 import express from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import { connectDatabase } from './config/database.js'
 import { setupSocketHandlers } from './sockets/handlers.js'
 import roomRoutes from './routes/rooms.js'
@@ -10,9 +10,9 @@ import leaderboardRoutes from './routes/leaderboard.js'
 import contestRoutes from './routes/contests.js'
 import usersRoutes from './routes/users.js'
 import adminRoutes from './routes/admin.js'
+import questionRoutes from './routes/questions.js'
 
-// Load environment variables
-dotenv.config()
+console.log('Admin password configured:', process.env.ADMIN_PASSWORD ? 'yes' : 'no')
 
 // Initialize Express app
 const app = express()
@@ -49,6 +49,7 @@ app.use('/api/rooms', roomRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
 app.use('/api/contests', contestRoutes)
 app.use('/api/users', usersRoutes)
+app.use('/api/questions', questionRoutes)
 app.use('/api/admin', adminRoutes)
 
 // Socket.io event handlers
